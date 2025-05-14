@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Technician Stock Removal</title>
   <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   <style>
     :root {
       --green: #76b729;
@@ -188,7 +190,18 @@
         });
       }
   
-      loadProducts();
+      loadProducts().then(() => {
+        // After dropdowns are created
+        document.querySelectorAll('select').forEach(select => {
+          new Choices(select, {
+            searchEnabled: true,
+            itemSelectText: '',
+            shouldSort: false,
+            placeholderValue: '-- Select a product --'
+          });
+        });
+      });
+
   
       document.getElementById('stockForm').addEventListener('submit', async (e) => {
         e.preventDefault();
