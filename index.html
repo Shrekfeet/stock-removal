@@ -4,91 +4,93 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Technician Stock Removal</title>
-<style>
-  :root {
-    --primary-color: #00796b;
-    --border-radius: 12px;
-    --field-padding: 0.75rem;
-    --input-bg: #f8f9fa;
-    --input-border: #ccc;
-  }
+  <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #76b729;
+      --green-light: #98c367;
+      --green-deep: #54851c;
+      --brown: #784e2f;
+      --field-radius: 12px;
+    }
 
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #fafafa;
-    padding: 2rem;
-    max-width: 600px;
-    margin: auto;
-    color: #333;
-  }
+    body {
+      font-family: 'Domine', serif;
+      background-color: #f4f7f4;
+      padding: 2rem;
+      max-width: 650px;
+      margin: auto;
+      color: #333;
+    }
 
-  h2 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 1.5rem;
-  }
+    .logo {
+      display: block;
+      max-width: 180px;
+      margin: 0 auto 1rem auto;
+    }
 
-  form {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
+    h2 {
+      text-align: center;
+      color: var(--green-deep);
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+    }
 
-  label {
-    display: block;
-    margin-top: 1rem;
-    font-weight: 500;
-    color: #444;
-  }
+    form {
+      background: white;
+      padding: 2rem;
+      border-radius: var(--field-radius);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
 
-  select,
-  input {
-    width: 100%;
-    padding: var(--field-padding);
-    margin-top: 0.25rem;
-    font-size: 1rem;
-    border: 1px solid var(--input-border);
-    border-radius: var(--border-radius);
-    background-color: var(--input-bg);
-    transition: border-color 0.2s;
-  }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: var(--green-deep);
+    }
 
-  select:focus,
-  input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-  }
+    select,
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.25rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: var(--field-radius);
+      background-color: #f9f9f9;
+      transition: border-color 0.2s;
+      font-family: 'Domine', serif;
+    }
 
-  button {
-    margin-top: 2rem;
-    padding: 0.85rem;
-    font-size: 1rem;
-    border: none;
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: bold;
-    border-radius: var(--border-radius);
-    width: 100%;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+    select:focus,
+    input:focus {
+      border-color: var(--green);
+      outline: none;
+    }
 
-  button:hover {
-    background-color: #005b4f;
-  }
+    button {
+      margin-top: 2rem;
+      padding: 0.9rem;
+      font-size: 1rem;
+      border: none;
+      background-color: var(--green);
+      color: white;
+      font-weight: bold;
+      border-radius: var(--field-radius);
+      width: 100%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-family: 'Domine', serif;
+    }
 
-  .logo {
-  display: block;
-  max-width: 160px;
-  margin: 0 auto 1rem auto;
-  border-radius: 12px;
-  }
-</style>
-
+    button:hover {
+      background-color: var(--green-deep);
+    }
+  </style>
 </head>
 <body>
-  <img src="Shrekfeet Logo.png" alt="Company Logo" class="logo" />
+  <img src="Shrekfeet Logo.png" alt="Shrekfeet Logo" class="logo" />
   <h2>Technician Stock Removal</h2>
 
   <form id="stockForm">
@@ -107,7 +109,6 @@
 
   <script>
     window.addEventListener("DOMContentLoaded", function () {
-      console.log('loaded!')
       const sheetID = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
       const webhookURL = 'https://hook.eu2.make.com/skxfmwfapxg7v9t61j8jstf1rv02e7rd';
 
