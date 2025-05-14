@@ -89,6 +89,46 @@
     button:hover {
       background-color: var(--green-deep);
     }
+
+    .choices {
+      margin-top: 0.25rem;
+      font-size: 1rem;
+      border-radius: var(--field-radius);
+    }
+    
+    .choices__inner {
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--field-radius);
+      padding: 0.75rem;
+      min-height: 44px;
+      box-shadow: none;
+    }
+    
+    .choices__list--dropdown,
+    .choices__list[aria-expanded] {
+      border-radius: var(--field-radius);
+      font-size: 1rem;
+    }
+    
+    .choices__item--selectable {
+      padding: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    
+    .choices__item--selectable.is-highlighted {
+      background-color: var(--green-light);
+      color: #000;
+    }
+    
+    .choices[data-type*="select-one"] .choices__inner {
+      padding-right: 2rem;
+    }
+    
+    .choices__placeholder {
+      opacity: 0.6;
+    }
+
   </style>
 </head>
 <body>
