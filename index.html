@@ -46,26 +46,29 @@
     }
 
     label {
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
       margin-top: 1rem;
       font-weight: 600;
       color: var(--green-deep);
     }
 
-    select,
-    input {
+    input,
+    .choices__inner {
       width: 100%;
-      padding: 0.75rem;
-      margin-top: 0.25rem;
+      height: 48px;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
       font-size: 1rem;
+      font-family: 'Domine', serif;
+      background-color: #f9f9f9;
+      color: #333;
       border: 1px solid #ccc;
       border-radius: var(--field-radius);
-      background-color: #f9f9f9;
-      transition: border-color 0.2s;
-      font-family: 'Domine', serif;
+      box-sizing: border-box;
     }
 
-    select:focus,
     input:focus {
       border-color: var(--green);
       outline: none;
@@ -93,61 +96,33 @@
     .choices {
       margin-top: 0.25rem;
       font-size: 1rem;
-      border-radius: var(--field-radius);
-    }
-    
-    .choices__inner {
-      display: flex;
-      align-items: center;
-      height: 48px;
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-      font-size: 1rem;
-      font-family: 'Domine', serif;
-      border: 1px solid #ccc;
-      border-radius: var(--field-radius);
-      background-color: #f9f9f9;
-      color: #333;
-      box-sizing: border-box;
     }
 
-    input,
-    .choices__inner {
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-    }
-    
     .choices__list--dropdown {
       border: 1px solid #ccc;
-      border-radius: 12px;
+      border-radius: var(--field-radius);
+      background-color: white;
+      font-size: 1rem;
     }
 
-    .choices__list[aria-expanded] {
-      border: 1px solid var(--input-border);
-      border-radius: var(--field-radius);
-      font-size: 1rem;
-      background-color: white;
-    }
-    
     .choices__item--selectable {
       padding: 0.5rem;
       transition: background-color 0.2s;
     }
-    
+
     .choices__item--selectable.is-highlighted {
       background-color: var(--green-light);
       color: #000;
     }
-    
+
     .choices[data-type*="select-one"] .choices__inner {
       padding-right: 2rem;
     }
-    
+
     .choices__placeholder {
       opacity: 0.6;
       font-style: italic;
     }
-
   </style>
 </head>
 <body>
@@ -166,7 +141,7 @@
     <div id="productFields"></div>
 
     <p id="limitMessage" style="display: none; color: #784e2f; margin-top: 1.5rem; font-weight: bold;">
-    If you need to add more items for removal, please submit another form.
+      If you need to add more items for removal, please submit another form.
     </p>
 
     <button type="submit">Submit</button>
@@ -177,19 +152,19 @@
       const sheetID = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
       const webhookURL = 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
       const productFieldsContainer = document.getElementById('productFields');
-  
+
       // ✅ Auto-fill today's date
       const dateInput = document.querySelector('input[name="date"]');
       if (dateInput) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.value = today;
       }
-  
+
       const createProductBlock = (index, productList) => {
         const div = document.createElement('div');
         div.className = 'product-block';
         div.style.display = index === 0 ? 'block' : 'none';
-  
+
         div.innerHTML = `
           <label>Product ${index + 1}
             <select name="product${index}">
@@ -203,7 +178,7 @@
         `;
         return div;
       };
-  
+
       async function loadProducts() {
         try {
           const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
@@ -212,22 +187,22 @@
           const json = JSON.parse(text.substr(47).slice(0, -2));
           const rows = json.table.rows;
           const products = rows.map(row => row.c[0]?.v).filter(Boolean);
-  
+
           for (let i = 0; i < 5; i++) {
             const block = createProductBlock(i, products);
             productFieldsContainer.appendChild(block);
           }
-  
+
           addFieldVisibilityLogic();
         } catch (err) {
           console.error('Failed to load product list:', err);
           productFieldsContainer.innerHTML = "<p style='color:red;'>Failed to load product list. Please try again later.</p>";
         }
       }
-  
+
       function addFieldVisibilityLogic() {
         const blocks = document.querySelectorAll('.product-block');
-      
+
         blocks.forEach((block, index) => {
           const qtyInput = block.querySelector(`input[name="quantity${index}"]`);
           if (qtyInput) {
@@ -237,8 +212,8 @@
                 const shouldShow = qtyInput.value && parseInt(qtyInput.value) > 0;
                 nextBlock.style.display = shouldShow ? 'block' : 'none';
               }
-      
-              // 👇 New logic to show limit message after Product 5
+
+              // 👇 Show limit message after 5th item
               if (index === 4) {
                 const msg = document.getElementById('limitMessage');
                 const shouldShowMsg = qtyInput.value && parseInt(qtyInput.value) > 0;
@@ -248,7 +223,7 @@
           }
         });
       }
-  
+
       loadProducts().then(() => {
         // After dropdowns are created
         document.querySelectorAll('select').forEach(select => {
@@ -261,7 +236,6 @@
         });
       });
 
-  
       document.getElementById('stockForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const data = new FormData(e.target);
@@ -270,7 +244,7 @@
           date: data.get('date'),
           products: []
         };
-  
+
         for (let i = 0; i < 5; i++) {
           const product = data.get(`product${i}`);
           const quantity = data.get(`quantity${i}`);
@@ -278,7 +252,7 @@
             payload.products.push({ product, quantity });
           }
         }
-  
+
         const res = await fetch(webhookURL, {
           method: 'POST',
           body: JSON.stringify(payload),
@@ -286,7 +260,7 @@
             'Content-Type': 'application/json'
           }
         });
-  
+
         if (res.ok) {
           alert('Form submitted successfully!');
           e.target.reset();
