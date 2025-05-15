@@ -103,12 +103,16 @@
       padding: 0.75rem;
       min-height: 44px;
       box-shadow: none;
+      font-size: 1rem;
+      color: #333;
     }
     
     .choices__list--dropdown,
     .choices__list[aria-expanded] {
+      border: 1px solid var(--input-border);
       border-radius: var(--field-radius);
       font-size: 1rem;
+      background-color: white;
     }
     
     .choices__item--selectable {
@@ -127,6 +131,7 @@
     
     .choices__placeholder {
       opacity: 0.6;
+      font-style: italic;
     }
 
   </style>
