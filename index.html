@@ -15,25 +15,29 @@
     :root{
       --green:#76b729;
       --green-600:#54851c;
-      --green-100:#eaf6db;
+      --green-700:#406516;
+      --mint:#eaf6db;
       --brown:#784e2f;
-      --bg:#f6f8f5;
-      --text:#242424;
+      --bg:#f5f7f9;
+      --surface:#ffffff;
+      --text:#1f2937;
       --muted:#6b7280;
-      --field:#f9faf9;
-      --border:#d6d9d6;
+      --field:#f9fafb;
+      --border:#e5e7eb;
       --radius:14px;
-      --shadow:0 10px 25px rgba(0,0,0,.07);
+      --shadow:0 6px 18px rgba(16,24,40,.08);
+      --shadow-soft:0 2px 8px rgba(16,24,40,.06);
     }
     @media (prefers-color-scheme: dark){
       :root{
-        --bg:#101512;
-        --text:#f2f5f2;
-        --muted:#a3a9a3;
-        --field:#182019;
-        --border:#2a342c;
-        --green-100:#1b2a13;
-        --shadow:0 12px 30px rgba(0,0,0,.45);
+        --bg:#0f1418;
+        --surface:#121a21;
+        --text:#e5e7eb;
+        --muted:#9aa3af;
+        --field:#0f1418;
+        --border:#22303b;
+        --shadow:0 10px 28px rgba(0,0,0,.45);
+        --shadow-soft:0 2px 10px rgba(0,0,0,.35);
       }
     }
 
@@ -43,7 +47,7 @@
       margin:0;
       font-family:'Domine',serif;
       color:var(--text);
-      background:linear-gradient(180deg,var(--bg),#fff0);
+      background:var(--bg);
     }
     .wrap{
       max-width:720px;
@@ -59,13 +63,14 @@
       min-width:140px;
       margin: 8px auto 6px;
       height:auto;
+      filter: drop-shadow(var(--shadow-soft));
     }
     h1{
-      margin:0 0 14px 0;
+      margin:0 0 12px 0;
       text-align:center;
       font-size:clamp(22px,4.5vw,30px);
       color:var(--green-600);
-      letter-spacing:.3px;
+      letter-spacing:.2px;
     }
     .subtle{
       text-align:center;
@@ -76,30 +81,32 @@
 
     /* Card */
     .card{
-      background:linear-gradient(180deg,#fff, var(--field));
+      background:var(--surface);
       border:1px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       padding:clamp(14px,3.5vw,24px);
     }
 
-    /* Form */
+    /* Form grid */
     .row{
       display:grid;
-      gap:10px;
+      gap:12px;
     }
     .row--split{
       grid-template-columns: 1fr;
-      gap:10px;
+      gap:12px;
     }
     @media (min-width:640px){
-      .row--split{ grid-template-columns: 2fr 1fr; gap:12px; }
+      .row--split{ grid-template-columns: 2fr 1fr; }
     }
+    /* Prevent overflow on small screens (fixes date input overflow) */
+    .row > * { min-width: 0; }
 
     label{
       font-weight:700;
-      color:var(--green-600);
-      margin: 8px 0 6px;
+      color:var(--green-700);
+      margin: 6px 0 6px;
       display:block;
     }
     .help{
@@ -110,6 +117,7 @@
 
     input, .choices__inner{
       width:100%;
+      min-width:0; /* critical for mobile overflow */
       height:50px;
       padding:12px 14px;
       font-size:16px;
@@ -125,8 +133,21 @@
     input:focus, .choices__inner:focus-within{
       outline:none;
       border-color:var(--green);
-      box-shadow:0 0 0 3px color-mix(in oklab, var(--green) 25%, transparent);
+      box-shadow:0 0 0 3px rgba(118,183,41,.25);
       background:#fff;
+    }
+
+    /* iOS/WebKit date input quirks: keep it inside container */
+    input[type="date"]{
+      appearance: none;
+      -webkit-appearance: none;
+      width:100%;
+      overflow:hidden;   /* prevents native icon from pushing width */
+      text-overflow: ellipsis;
+    }
+    input[type="date"]::-webkit-date-and-time-value { text-align:left; }
+    input[type="date"]::-webkit-calendar-picker-indicator{
+      cursor:pointer;
     }
 
     /* Choices tweaks */
@@ -143,15 +164,16 @@
       overflow:auto;
     }
     .choices__item--selectable{ padding:10px 12px; }
-    .choices__item--selectable.is-highlighted{ background:var(--green-100); }
+    .choices__item--selectable.is-highlighted{ background:var(--mint); }
 
-    /* Product block card */
+    /* Product block */
     .product{
-      border:1px dashed var(--border);
-      background:linear-gradient(180deg,#fff, var(--field));
+      border:1px solid var(--border);
+      background:var(--surface);
       border-radius:12px;
       padding:14px;
       margin-top:12px;
+      box-shadow:var(--shadow-soft);
     }
     .product__title{
       font-weight:700;
@@ -166,15 +188,16 @@
       padding:14px 16px;
       font-size:16px;
       border:none;
-      background:linear-gradient(180deg,var(--green),var(--green-600));
+      background:var(--green);
       color:#fff;
       font-weight:800;
       border-radius:14px;
       width:100%;
       cursor:pointer;
-      transition:transform .05s ease, filter .2s;
-      will-change: transform;
+      transition:transform .05s ease, filter .2s, background .2s;
+      box-shadow: var(--shadow-soft);
     }
+    .btn:hover{ background:var(--green-600); }
     .btn:active{ transform: scale(.99); }
     .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
@@ -187,7 +210,7 @@
       border:1px solid var(--border);
       background: #fff;
     }
-    .msg--warn{ background: color-mix(in oklab, var(--green-100) 65%, #fff 35%); border-color: var(--green); color: #1d3a10; }
+    .msg--warn{ background: var(--mint); border-color: var(--green); color:#1d3a10; }
     .msg--error{ background:#fde7e7; border-color:#ffb4b4; color:#7f1d1d; }
     .msg--ok{ background:#e6f6ea; border-color:#a9e1bc; color:#0f5132; }
 
@@ -256,7 +279,6 @@
     const submitBtn = $('#submitBtn');
     const formMsg = $('#formMsg');
     const limitMessage = $('#limitMessage');
-    const loadingMsg = $('#loadingMsg');
 
     // Autofill today's date
     dateInput.valueAsDate = new Date();
@@ -294,9 +316,8 @@
 
     const initChoicesForSelects = () => {
       $$('select').forEach(sel=>{
-        // Avoid double-init
-        if (sel.dataset.choicesInit) return;
-        const inst = new Choices(sel, {
+        if (sel.dataset.choicesInit) return; // avoid double-init
+        new Choices(sel, {
           searchEnabled:true,
           itemSelectText:'',
           shouldSort:false,
@@ -304,29 +325,28 @@
           allowHTML:false
         });
         sel.dataset.choicesInit = '1';
-        // Keep native value attribute in sync for FormData
         sel.addEventListener('change', ()=> { sel.setAttribute('value', sel.value || ''); });
       });
     };
 
     const toggleSubmitEnabled = () => {
       const hasOneValid = Array.from({length:maxItems}).some((_,i)=>{
-        const prod = $(`#product${i}`);
-        const qty  = $(`#quantity${i}`);
+        const prod = document.getElementById(`product${i}`);
+        const qty  = document.getElementById(`quantity${i}`);
         return prod && qty && prod.value && qty.value && Number(qty.value) > 0;
       });
-      const nameOk = $('#technician').value.trim().length > 0;
+      const nameOk = document.getElementById('technician').value.trim().length > 0;
       const dateOk = !!dateInput.value;
       submitBtn.disabled = !(hasOneValid && nameOk && dateOk);
     };
 
     const addVisibilityLogic = () => {
       for (let i=0; i<maxItems; i++){
-        const qty = $(`#quantity${i}`);
+        const qty = document.getElementById(`quantity${i}`);
         if (!qty) continue;
         qty.addEventListener('input', ()=>{
           const val = parseInt(qty.value,10);
-          const next = $(`.product:nth-of-type(${i+2})`, productFields);
+          const next = productFields.children[i+1];
           if (next){
             next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
           }
@@ -335,12 +355,12 @@
           }
           toggleSubmitEnabled();
         });
-        const prod = $(`#product${i}`);
+        const prod = document.getElementById(`product${i}`);
         if (prod){
           prod.addEventListener('change', toggleSubmitEnabled);
         }
       }
-      $('#technician').addEventListener('input', toggleSubmitEnabled);
+      document.getElementById('technician').addEventListener('input', toggleSubmitEnabled);
       dateInput.addEventListener('change', toggleSubmitEnabled);
     };
 
@@ -356,8 +376,8 @@
         if (!products.length) throw new Error('No products found in sheet');
 
         // Build 5 product blocks
-        productFields.innerHTML = ''; // clear loading
-        for (let i=0;i<maxItems;i++){
+        productFields.innerHTML = '';
+        for (let i=0;i<5;i++){
           productFields.appendChild( makeProductBlock(i, products) );
         }
         productFields.setAttribute('aria-busy','false');
@@ -371,20 +391,18 @@
       }
     };
 
-    // Submit
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       showMsg(formMsg, '', '');
       submitBtn.disabled = true;
 
-      // Build payload
       const data = new FormData(form);
       const payload = {
         technician: data.get('technician')?.trim(),
         date: data.get('date'),
         products: []
       };
-      for (let i=0; i<maxItems; i++){
+      for (let i=0; i<5; i++){
         const product = data.get(`product${i}`);
         const quantity = data.get(`quantity${i}`);
         if (product && quantity && Number(quantity)>0){
@@ -392,18 +410,16 @@
         }
       }
 
-      // Guard: require at least one item
       if (!payload.products.length){
         showMsg(formMsg, 'Please select at least one product with a quantity of 1 or more.', 'warn');
         submitBtn.disabled = false;
         return;
       }
 
-      // POST with timeout
       const controller = new AbortController();
       const t = setTimeout(()=>controller.abort(), 15000);
       try{
-        const res = await fetch(webhookURL, {
+        const res = await fetch('https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4', {
           method:'POST',
           body: JSON.stringify(payload),
           headers:{ 'Content-Type':'application/json' },
@@ -413,10 +429,8 @@
 
         if (res.ok){
           showMsg(formMsg, 'Form submitted successfully!', 'ok');
-          // Soft reset (keep product list loaded & Choices instances)
           form.reset();
-          // Reset choices selections & hide subsequent blocks again
-          for (let i=0; i<maxItems; i++){
+          for (let i=0; i<5; i++){
             const sel = document.getElementById(`product${i}`);
             const qty = document.getElementById(`quantity${i}`);
             if (sel){
@@ -428,6 +442,7 @@
             block.style.display = i===0 ? 'block' : 'none';
           }
           limitMessage.style.display='none';
+          dateInput.valueAsDate = new Date();
           toggleSubmitEnabled();
         }else{
           showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
@@ -442,7 +457,6 @@
       }
     });
 
-    // Kick off
     loadProducts();
   })();
   </script>
