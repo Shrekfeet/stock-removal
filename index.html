@@ -164,7 +164,15 @@
       overflow:auto;
     }
     .choices__item--selectable{ padding:10px 12px; }
-    .choices__item--selectable.is-highlighted{ background:var(--mint); }
+    .choices__item--selectable.is-highlighted{
+      background: var(--mint);
+      color: var(--green-700) !important;
+    }
+
+    .choices__list--dropdown .choices__item,
+    .choices__list[aria-expanded] .choices__item {
+      color: var(--green-600) !important; /* or use var(--green) if you prefer the brighter green */
+    }
 
     /* Product block */
     .product{
