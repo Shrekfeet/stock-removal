@@ -2,285 +2,449 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#76b729">
   <title>Technician Stock Removal</title>
+
+  <!-- Fonts & Choices.js -->
   <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
   <style>
-    :root {
-      --green: #76b729;
-      --green-light: #98c367;
-      --green-deep: #54851c;
-      --brown: #784e2f;
-      --field-radius: 12px;
+    :root{
+      --green:#76b729;
+      --green-600:#54851c;
+      --green-100:#eaf6db;
+      --brown:#784e2f;
+      --bg:#f6f8f5;
+      --text:#242424;
+      --muted:#6b7280;
+      --field:#f9faf9;
+      --border:#d6d9d6;
+      --radius:14px;
+      --shadow:0 10px 25px rgba(0,0,0,.07);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#101512;
+        --text:#f2f5f2;
+        --muted:#a3a9a3;
+        --field:#182019;
+        --border:#2a342c;
+        --green-100:#1b2a13;
+        --shadow:0 12px 30px rgba(0,0,0,.45);
+      }
     }
 
-    body {
-      font-family: 'Domine', serif;
-      background-color: #f4f7f4;
-      padding: 2rem;
-      max-width: 650px;
-      margin: auto;
-      color: #333;
+    /* Layout */
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:'Domine',serif;
+      color:var(--text);
+      background:linear-gradient(180deg,var(--bg),#fff0);
+    }
+    .wrap{
+      max-width:720px;
+      margin-inline:auto;
+      padding:clamp(16px,3vw,28px);
     }
 
-    .logo {
-      display: block;
-      max-width: 180px;
-      margin: 0 auto 1rem auto;
+    /* Header */
+    .logo{
+      display:block;
+      max-width:160px;
+      width:50%;
+      min-width:140px;
+      margin: 8px auto 6px;
+      height:auto;
+    }
+    h1{
+      margin:0 0 14px 0;
+      text-align:center;
+      font-size:clamp(22px,4.5vw,30px);
+      color:var(--green-600);
+      letter-spacing:.3px;
+    }
+    .subtle{
+      text-align:center;
+      color:var(--muted);
+      margin:0 0 18px;
+      font-size:14px;
     }
 
-    h2 {
-      text-align: center;
-      color: var(--green-deep);
-      margin-bottom: 1.5rem;
-      font-weight: 700;
+    /* Card */
+    .card{
+      background:linear-gradient(180deg,#fff, var(--field));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:clamp(14px,3.5vw,24px);
     }
 
-    form {
-      background: white;
-      padding: 2rem;
-      border-radius: var(--field-radius);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    /* Form */
+    .row{
+      display:grid;
+      gap:10px;
+    }
+    .row--split{
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width:640px){
+      .row--split{ grid-template-columns: 2fr 1fr; gap:12px; }
     }
 
-    label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      margin-top: 1rem;
-      font-weight: 600;
-      color: var(--green-deep);
+    label{
+      font-weight:700;
+      color:var(--green-600);
+      margin: 8px 0 6px;
+      display:block;
+    }
+    .help{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:6px;
     }
 
-    input,
-    .choices__inner {
-      width: 100%;
-      height: 48px;
-      padding-left: 0.75rem;
-      padding-right: 0.75rem;
-      font-size: 1rem;
-      font-family: 'Domine', serif;
-      background-color: #f9f9f9;
-      color: #333;
-      border: 1px solid #ccc;
-      border-radius: var(--field-radius);
-      box-sizing: border-box;
+    input, .choices__inner{
+      width:100%;
+      height:50px;
+      padding:12px 14px;
+      font-size:16px;
+      font-family:'Domine',serif;
+      background:var(--field);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-sizing:border-box;
+      transition:border-color .2s, box-shadow .2s, background .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    input:focus, .choices__inner:focus-within{
+      outline:none;
+      border-color:var(--green);
+      box-shadow:0 0 0 3px color-mix(in oklab, var(--green) 25%, transparent);
+      background:#fff;
     }
 
-    input:focus {
-      border-color: var(--green);
-      outline: none;
+    /* Choices tweaks */
+    .choices{ margin-top:6px; font-size:16px; }
+    .choices__inner{ min-height:50px; display:flex; align-items:center; }
+    .choices.is-open .choices__inner{ border-radius:12px 12px 0 0; }
+    .choices__list--dropdown, .choices__list[aria-expanded]{
+      border:1px solid var(--border);
+      border-top:none;
+      background:#fff;
+      font-size:16px;
+      border-radius:0 0 12px 12px;
+      max-height:280px;
+      overflow:auto;
+    }
+    .choices__item--selectable{ padding:10px 12px; }
+    .choices__item--selectable.is-highlighted{ background:var(--green-100); }
+
+    /* Product block card */
+    .product{
+      border:1px dashed var(--border);
+      background:linear-gradient(180deg,#fff, var(--field));
+      border-radius:12px;
+      padding:14px;
+      margin-top:12px;
+    }
+    .product__title{
+      font-weight:700;
+      margin:0 0 6px;
+      font-size:15px;
+      color:var(--brown);
     }
 
-    button {
-      margin-top: 2rem;
-      padding: 0.9rem;
-      font-size: 1rem;
-      border: none;
-      background-color: var(--green);
-      color: white;
-      font-weight: bold;
-      border-radius: var(--field-radius);
-      width: 100%;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      font-family: 'Domine', serif;
+    /* Buttons */
+    .btn{
+      margin-top:16px;
+      padding:14px 16px;
+      font-size:16px;
+      border:none;
+      background:linear-gradient(180deg,var(--green),var(--green-600));
+      color:#fff;
+      font-weight:800;
+      border-radius:14px;
+      width:100%;
+      cursor:pointer;
+      transition:transform .05s ease, filter .2s;
+      will-change: transform;
+    }
+    .btn:active{ transform: scale(.99); }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    /* Messages */
+    .msg{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:14px;
+      border:1px solid var(--border);
+      background: #fff;
+    }
+    .msg--warn{ background: color-mix(in oklab, var(--green-100) 65%, #fff 35%); border-color: var(--green); color: #1d3a10; }
+    .msg--error{ background:#fde7e7; border-color:#ffb4b4; color:#7f1d1d; }
+    .msg--ok{ background:#e6f6ea; border-color:#a9e1bc; color:#0f5132; }
+
+    /* Footer note */
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      margin-top:16px;
+      font-size:12px;
     }
 
-    button:hover {
-      background-color: var(--green-deep);
-    }
-
-    .choices {
-      margin-top: 0.25rem;
-      font-size: 1rem;
-    }
-
-    .choices__list--dropdown,
-    .choices__list[aria-expanded] {
-      border: 1px solid #ccc;
-      border-radius: 0 0 var(--field-radius) var(--field-radius);
-      background-color: white;
-      font-size: 1rem;
-    }
-
-    .choices.is-open .choices__inner {
-      border-radius: var(--field-radius) var(--field-radius) 0 0;
-    }
-
-    .choices__item--selectable {
-      padding: 0.5rem;
-      transition: background-color 0.2s;
-    }
-
-    .choices__item--selectable.is-highlighted {
-      background-color: var(--green-light);
-      color: #000;
-    }
-
-    .choices[data-type*="select-one"] .choices__inner {
-      padding-right: 2rem;
-    }
-
-    .choices__inner .choices__item.choices__placeholder {
-      display: flex;
-      align-items: center;
-      height: 100%;
-    }
-    
-    .choices__placeholder {
-      opacity: 0.6;
-      font-style: italic;
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important }
     }
   </style>
 </head>
 <body>
-  <img src="Shrekfeet Logo.png" alt="Shrekfeet Logo" class="logo" />
-  <h2>Technician Stock Removal</h2>
+  <div class="wrap">
+    <img src="Shrekfeet Logo.png" alt="Shrekfeet Logo" class="logo" />
+    <h1>Technician Stock Removal</h1>
+    <p class="subtle">Fill out your name, date, and up to five items to remove from stock.</p>
 
-  <form id="stockForm">
-    <label>Technician Name
-      <input type="text" name="technician" required />
-    </label>
+    <form id="stockForm" class="card" novalidate>
+      <div class="row">
+        <div>
+          <label for="technician">Technician Name</label>
+          <input id="technician" name="technician" type="text" placeholder="e.g., Alex Brown" autocomplete="name" required/>
+          <div class="help">Required</div>
+        </div>
 
-    <label>Date
-      <input type="date" name="date" required />
-    </label>
+        <div>
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" required/>
+        </div>
+      </div>
 
-    <div id="productFields"></div>
+      <div id="productFields" aria-live="polite" aria-busy="true">
+        <div class="msg" id="loadingMsg">Loading product list…</div>
+      </div>
 
-    <p id="limitMessage" style="display: none; color: #784e2f; margin-top: 1.5rem; font-weight: bold;">
-      If you need to add more items for removal, please submit another form.
-    </p>
+      <p id="limitMessage" class="msg msg--warn" style="display:none;">
+        You’ve reached the 5-item limit. If you need to remove more items, please submit another form.
+      </p>
 
-    <button type="submit">Submit</button>
-  </form>
+      <div id="formMsg" class="msg" style="display:none;"></div>
+
+      <button id="submitBtn" class="btn" type="submit" disabled>Submit</button>
+
+      <p class="footer-note">All submissions are sent securely.</p>
+    </form>
+  </div>
 
   <script>
-    window.addEventListener("DOMContentLoaded", function () {
-      const sheetID = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
-      const webhookURL = 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
-      const productFieldsContainer = document.getElementById('productFields');
+  (function(){
+    const sheetID   = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
+    const webhookURL= 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
+    const maxItems  = 5;
 
-      // ✅ Auto-fill today's date
-      const dateInput = document.querySelector('input[name="date"]');
-      if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-      }
+    const $ = (sel,root=document)=>root.querySelector(sel);
+    const $$= (sel,root=document)=>Array.from(root.querySelectorAll(sel));
 
-      const createProductBlock = (index, productList) => {
-        const div = document.createElement('div');
-        div.className = 'product-block';
-        div.style.display = index === 0 ? 'block' : 'none';
+    const form = $('#stockForm');
+    const dateInput = $('#date');
+    const productFields = $('#productFields');
+    const submitBtn = $('#submitBtn');
+    const formMsg = $('#formMsg');
+    const limitMessage = $('#limitMessage');
+    const loadingMsg = $('#loadingMsg');
 
-        div.innerHTML = `
-          <label>Product ${index + 1}
-            <select name="product${index}">
+    // Autofill today's date
+    dateInput.valueAsDate = new Date();
+
+    // Helpers
+    const showMsg = (el, text, type='')=>{
+      el.textContent = text;
+      el.className = 'msg' + (type ? ' msg--' + type : '');
+      el.style.display = text ? 'block' : 'none';
+    };
+
+    const makeProductBlock = (index, products) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'product';
+      wrap.style.display = index===0 ? 'block' : 'none';
+      wrap.innerHTML = `
+        <p class="product__title">Item ${index+1}</p>
+        <div class="row row--split">
+          <div>
+            <label for="product${index}">Product</label>
+            <select id="product${index}" name="product${index}" aria-label="Product ${index+1}">
               <option value="">-- Select a product --</option>
-              ${productList.map(p => `<option value="${p}">${p}</option>`).join('')}
+              ${products.map(p=>`<option value="${p.replaceAll('"','&quot;')}">${p}</option>`).join('')}
             </select>
-          </label>
-          <label>Quantity
-            <input type="number" name="quantity${index}" min="1" />
-          </label>
-        `;
-        return div;
+          </div>
+          <div>
+            <label for="quantity${index}">Quantity</label>
+            <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index+1}"/>
+            <div class="help">Enter a whole number (min 1)</div>
+          </div>
+        </div>
+      `;
+      return wrap;
+    };
+
+    const initChoicesForSelects = () => {
+      $$('select').forEach(sel=>{
+        // Avoid double-init
+        if (sel.dataset.choicesInit) return;
+        const inst = new Choices(sel, {
+          searchEnabled:true,
+          itemSelectText:'',
+          shouldSort:false,
+          placeholderValue:'-- Select a product --',
+          allowHTML:false
+        });
+        sel.dataset.choicesInit = '1';
+        // Keep native value attribute in sync for FormData
+        sel.addEventListener('change', ()=> { sel.setAttribute('value', sel.value || ''); });
+      });
+    };
+
+    const toggleSubmitEnabled = () => {
+      const hasOneValid = Array.from({length:maxItems}).some((_,i)=>{
+        const prod = $(`#product${i}`);
+        const qty  = $(`#quantity${i}`);
+        return prod && qty && prod.value && qty.value && Number(qty.value) > 0;
+      });
+      const nameOk = $('#technician').value.trim().length > 0;
+      const dateOk = !!dateInput.value;
+      submitBtn.disabled = !(hasOneValid && nameOk && dateOk);
+    };
+
+    const addVisibilityLogic = () => {
+      for (let i=0; i<maxItems; i++){
+        const qty = $(`#quantity${i}`);
+        if (!qty) continue;
+        qty.addEventListener('input', ()=>{
+          const val = parseInt(qty.value,10);
+          const next = $(`.product:nth-of-type(${i+2})`, productFields);
+          if (next){
+            next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+          }
+          if (i === maxItems-1){
+            limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+          }
+          toggleSubmitEnabled();
+        });
+        const prod = $(`#product${i}`);
+        if (prod){
+          prod.addEventListener('change', toggleSubmitEnabled);
+        }
+      }
+      $('#technician').addEventListener('input', toggleSubmitEnabled);
+      dateInput.addEventListener('change', toggleSubmitEnabled);
+    };
+
+    const loadProducts = async () => {
+      try{
+        const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+        const res = await fetch(url, {cache:'no-store'});
+        const text = await res.text();
+        const json = JSON.parse(text.substr(47).slice(0,-2));
+        const rows = json.table.rows || [];
+        const products = rows.map(r => r.c?.[0]?.v).filter(Boolean);
+
+        if (!products.length) throw new Error('No products found in sheet');
+
+        // Build 5 product blocks
+        productFields.innerHTML = ''; // clear loading
+        for (let i=0;i<maxItems;i++){
+          productFields.appendChild( makeProductBlock(i, products) );
+        }
+        productFields.setAttribute('aria-busy','false');
+        initChoicesForSelects();
+        addVisibilityLogic();
+        toggleSubmitEnabled();
+      }catch(err){
+        console.error('Failed to load product list:', err);
+        productFields.setAttribute('aria-busy','false');
+        showMsg(formMsg, 'Failed to load product list. Please try again later.', 'error');
+      }
+    };
+
+    // Submit
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      showMsg(formMsg, '', '');
+      submitBtn.disabled = true;
+
+      // Build payload
+      const data = new FormData(form);
+      const payload = {
+        technician: data.get('technician')?.trim(),
+        date: data.get('date'),
+        products: []
       };
-
-      async function loadProducts() {
-        try {
-          const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-          const res = await fetch(url);
-          const text = await res.text();
-          const json = JSON.parse(text.substr(47).slice(0, -2));
-          const rows = json.table.rows;
-          const products = rows.map(row => row.c[0]?.v).filter(Boolean);
-
-          for (let i = 0; i < 5; i++) {
-            const block = createProductBlock(i, products);
-            productFieldsContainer.appendChild(block);
-          }
-
-          addFieldVisibilityLogic();
-        } catch (err) {
-          console.error('Failed to load product list:', err);
-          productFieldsContainer.innerHTML = "<p style='color:red;'>Failed to load product list. Please try again later.</p>";
+      for (let i=0; i<maxItems; i++){
+        const product = data.get(`product${i}`);
+        const quantity = data.get(`quantity${i}`);
+        if (product && quantity && Number(quantity)>0){
+          payload.products.push({ product, quantity: String(parseInt(quantity,10)) });
         }
       }
 
-      function addFieldVisibilityLogic() {
-        const blocks = document.querySelectorAll('.product-block');
-
-        blocks.forEach((block, index) => {
-          const qtyInput = block.querySelector(`input[name="quantity${index}"]`);
-          if (qtyInput) {
-            qtyInput.addEventListener('input', () => {
-              const nextBlock = blocks[index + 1];
-              if (nextBlock) {
-                const shouldShow = qtyInput.value && parseInt(qtyInput.value) > 0;
-                nextBlock.style.display = shouldShow ? 'block' : 'none';
-              }
-
-              // 👇 Show limit message after 5th item
-              if (index === 4) {
-                const msg = document.getElementById('limitMessage');
-                const shouldShowMsg = qtyInput.value && parseInt(qtyInput.value) > 0;
-                msg.style.display = shouldShowMsg ? 'block' : 'none';
-              }
-            });
-          }
-        });
+      // Guard: require at least one item
+      if (!payload.products.length){
+        showMsg(formMsg, 'Please select at least one product with a quantity of 1 or more.', 'warn');
+        submitBtn.disabled = false;
+        return;
       }
 
-      loadProducts().then(() => {
-        // After dropdowns are created
-        document.querySelectorAll('select').forEach(select => {
-          new Choices(select, {
-            searchEnabled: true,
-            itemSelectText: '',
-            shouldSort: false,
-            placeholderValue: '-- Select a product --'
-          });
-        });
-      });
-
-      document.getElementById('stockForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = new FormData(e.target);
-        const payload = {
-          technician: data.get('technician'),
-          date: data.get('date'),
-          products: []
-        };
-
-        for (let i = 0; i < 5; i++) {
-          const product = data.get(`product${i}`);
-          const quantity = data.get(`quantity${i}`);
-          if (product && quantity) {
-            payload.products.push({ product, quantity });
-          }
-        }
-
+      // POST with timeout
+      const controller = new AbortController();
+      const t = setTimeout(()=>controller.abort(), 15000);
+      try{
         const res = await fetch(webhookURL, {
-          method: 'POST',
+          method:'POST',
           body: JSON.stringify(payload),
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers:{ 'Content-Type':'application/json' },
+          signal: controller.signal
         });
+        clearTimeout(t);
 
-        if (res.ok) {
-          alert('Form submitted successfully!');
-          e.target.reset();
-          location.reload();
-        } else {
-          alert('Something went wrong. Please try again.');
+        if (res.ok){
+          showMsg(formMsg, 'Form submitted successfully!', 'ok');
+          // Soft reset (keep product list loaded & Choices instances)
+          form.reset();
+          // Reset choices selections & hide subsequent blocks again
+          for (let i=0; i<maxItems; i++){
+            const sel = document.getElementById(`product${i}`);
+            const qty = document.getElementById(`quantity${i}`);
+            if (sel){
+              sel.value = '';
+              sel.dispatchEvent(new Event('change',{bubbles:true}));
+            }
+            if (qty){ qty.value=''; }
+            const block = productFields.children[i];
+            block.style.display = i===0 ? 'block' : 'none';
+          }
+          limitMessage.style.display='none';
+          toggleSubmitEnabled();
+        }else{
+          showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
+          submitBtn.disabled = false;
         }
-      });
+      }catch(err){
+        console.error(err);
+        showMsg(formMsg, 'Network error or timeout. Please check your connection and try again.', 'error');
+        submitBtn.disabled = false;
+      }finally{
+        clearTimeout(t);
+      }
     });
+
+    // Kick off
+    loadProducts();
+  })();
   </script>
 </body>
 </html>
