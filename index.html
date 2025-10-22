@@ -174,21 +174,23 @@
       color: var(--green-600) !important; /* or use var(--green) if you prefer the brighter green */
     }
 
-    /* --- Add search icon + placeholder styling --- */
-    .choices__input--cloned {
+    /* Magnifying glass in Choices search input (visible when dropdown is open) */
+    .choices .choices__input--cloned {
       background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%2376b729" viewBox="0 0 24 24"><path d="M10 2a8 8 0 105.29 14.29l4.48 4.47 1.42-1.42-4.47-4.48A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: 12px center;
-      background-size: 18px;
-      padding-left: 38px !important; /* make room for the icon */
-      font-size: 16px;
-      color: var(--text);
+      background-repeat: no-repeat !important;
+      background-position: 12px center !important;
+      background-size: 18px 18px !important;
+      padding-left: 38px !important;  /* space for icon */
+      -webkit-appearance: none;        /* iOS Safari */
+      appearance: none;
     }
-    
-    .choices__input--cloned::placeholder {
+    .choices .choices__input--cloned::placeholder {
+      font-size: 14px;   /* adjust to your liking */
       color: var(--muted);
       font-style: italic;
+      opacity: 0.9;
     }
+
 
     /* Product block */
     .product{
@@ -446,13 +448,13 @@
           categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
         }
     
-        // 4) Build <optgroup> HTML with data-stock attributes
+        // 4) Build <optgroup> HTML (no stock in label; stock only in data-stock)
         const optionsHTML = categories.map(cat => `
           <optgroup label="${cat.replaceAll('"','&quot;')}">
             ${categoryMap[cat].map(({product, stock}) => {
               const safe = product.replaceAll('"','&quot;');
-              const stockText = stock !== '' ? `${stock}` : 'n/a';
-              return `<option value="${safe}" data-stock="${stockText}">${safe} — ${stockText} in stock</option>`;
+              const stockText = (stock ?? '').toString().trim() || 'n/a';
+              return `<option value="${safe}" data-stock="${stockText}">${safe}</option>`;
             }).join('')}
           </optgroup>
         `).join('');
