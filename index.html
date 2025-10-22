@@ -298,28 +298,24 @@
       el.style.display = text ? 'block' : 'none';
     };
 
-    const makeProductBlock = (index, products) => {
+    const makeProductBlock = (index, optionsHTML) => {
       const wrap = document.createElement('div');
       wrap.className = 'product';
-      wrap.style.display = index===0 ? 'block' : 'none';
+      wrap.style.display = index === 0 ? 'block' : 'none';
       wrap.innerHTML = `
-        <p class="product__title">Item ${index+1}</p>
+        <p class="product__title">Item ${index + 1}</p>
         <div class="row row--split">
           <div>
             <label for="product${index}">Product</label>
-            <select id="product${index}" name="product${index}" aria-label="Product ${index+1}">
+            <select id="product${index}" name="product${index}" aria-label="Product ${index + 1}">
               <option value="">-- Select a product --</option>
-              ${categories.map(cat => `
-                <optgroup label="${cat}">
-                  ${categoryMap[cat].map(p => `<option value="${p.replaceAll('"','&quot;')}">${p}</option>`).join('')}
-                </optgroup>
-              `).join('')}
+              ${optionsHTML}
             </select>
           </div>
           <div>
             <label for="quantity${index}">Quantity</label>
-            <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index+1}"/>
-            <div class="help">Enter a number (e.g., 1)</div>
+            <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index + 1}"/>
+            <div class="help">Enter a whole number (min 1)</div>
           </div>
         </div>
       `;
@@ -377,65 +373,67 @@
     };
 
     const loadProducts = async () => {
-      try{
+      try {
         const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-        const res = await fetch(url, {cache:'no-store'});
+        const res = await fetch(url, { cache: 'no-store' });
         const text = await res.text();
-        const json = JSON.parse(text.substr(47).slice(0,-2));
+        const json = JSON.parse(text.substr(47).slice(0, -2));
         const { cols, rows } = json.table;
-
-        // Try to find the column labeled "Product" (case-insensitive)
-        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('item'));
-        
-        // Fallback: if no "Product" header, use the column with most filled cells
+    
+        // --- Find Product column index robustly ---
+        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product'));
         if (prodIdx === -1) {
+          // Fallback: pick the column with the most non-empty cells
           const counts = cols.map((_, i) =>
             rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0)
           );
           prodIdx = counts.indexOf(Math.max(...counts));
         }
-        
-        // Find the "Category" column index (assuming column C has category)
+    
+        // --- Find Category column index robustly (defaults to column C / index 2) ---
         let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
-        
-        // Fallback if not found
-        if (catIdx === -1) catIdx = 2; // typically column C
-        
-        // Build an object like { "Category A": ["Prod1", "Prod2"], "Category B": [...] }
+        if (catIdx === -1) catIdx = 2; // assume Column C if header not found
+    
+        // --- Build category → [products] map ---
         const categoryMap = {};
         rows.forEach(r => {
-          const prod = r?.c?.[prodIdx]?.v;
-          const cat = r?.c?.[catIdx]?.v || "Other";
-          if (prod) {
-            if (!categoryMap[cat]) categoryMap[cat] = [];
-            categoryMap[cat].push(prod);
-          }
+          const p = r?.c?.[prodIdx]?.v;
+          if (!p) return;
+          const cat = (r?.c?.[catIdx]?.v || 'Other').toString();
+          if (!categoryMap[cat]) categoryMap[cat] = [];
+          categoryMap[cat].push(p.toString());
         });
-        
-        // Sort products within each category alphabetically
-        for (const cat in categoryMap) {
-          categoryMap[cat].sort((a,b) => a.localeCompare(b));
+    
+        // Sort categories and products for nicer UX
+        const categories = Object.keys(categoryMap).sort((a, b) => a.localeCompare(b));
+        for (const k of categories) {
+          categoryMap[k].sort((a, b) => a.localeCompare(b));
         }
-        
-        // Flatten for dropdown building later
-        const categories = Object.keys(categoryMap);
-
-
-
-        if (!products.length) throw new Error('No products found in sheet');
-
-        // Build 5 product blocks
+    
+        // --- Build a single HTML string of <optgroup> blocks ---
+        const optionsHTML = categories.map(cat => `
+          <optgroup label="${cat.replaceAll('"','&quot;')}">
+            ${categoryMap[cat]
+              .map(p => `<option value="${p.replaceAll('"','&quot;')}">${p}</option>`)
+              .join('')}
+          </optgroup>
+        `).join('');
+    
+        if (!optionsHTML.trim()) throw new Error('No products found in sheet');
+    
+        // Build 5 product blocks using the prepared HTML
         productFields.innerHTML = '';
-        for (let i=0;i<5;i++){
-          productFields.appendChild( makeProductBlock(i, products) );
+        for (let i = 0; i < 5; i++) {
+          productFields.appendChild(makeProductBlock(i, optionsHTML));
         }
-        productFields.setAttribute('aria-busy','false');
+    
+        productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
         toggleSubmitEnabled();
-      }catch(err){
+      } catch (err) {
         console.error('Failed to load product list:', err);
-        productFields.setAttribute('aria-busy','false');
+        productFields.setAttribute('aria-busy', 'false');
         showMsg(formMsg, 'Failed to load product list. Please try again later.', 'error');
       }
     };
