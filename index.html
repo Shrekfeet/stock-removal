@@ -283,6 +283,17 @@
         </div>
       </div>
 
+      <fieldset class="mode" style="margin:8px 0 4px; border:0; padding:0;">
+        <legend style="font-weight:700; color:var(--green-700); margin-bottom:6px;">Action</legend>
+        <label style="margin-right:14px;">
+          <input type="radio" name="action" value="remove" checked> Remove from stock
+        </label>
+        <label>
+          <input type="radio" name="action" value="add"> Add to stock
+        </label>
+      </fieldset>
+
+
       <div id="productFields" aria-live="polite" aria-busy="true">
         <div class="msg" id="loadingMsg">Loading product list…</div>
       </div>
@@ -390,12 +401,14 @@
           if (i === maxItems-1){
             limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
           }
+          updateStockPreview(index);
           toggleSubmitEnabled();
         });
         const prod = document.getElementById(`product${i}`);
         if (prod){
           prod.addEventListener('change', () => {
             updateStockInfo(i);
+            updateStockPreview(index);
             toggleSubmitEnabled();
           });
         }
@@ -470,6 +483,12 @@
         productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
+        // 👇 NEW: refresh stock previews whenever Add/Remove mode changes
+        document.querySelectorAll('input[name="action"]').forEach(radio => {
+          radio.addEventListener('change', () => {
+            for (let i = 0; i < 5; i++) updateStockPreview(i);
+          });
+        });
         // Initialize stock readouts (empty until a selection)
         for (let i=0;i<5;i++) updateStockInfo(i);
         toggleSubmitEnabled();
@@ -493,6 +512,25 @@
     };
 
 
+    // Show live "after add/remove" preview
+    const updateStockPreview = (index) => {
+      const sel = document.getElementById(`product${index}`);
+      const qty = parseInt((document.getElementById(`quantity${index}`)?.value || '0'), 10);
+      const info = document.getElementById(`stockInfo${index}`);
+      if (!sel || !info) return;
+    
+      const opt = sel.selectedOptions?.[0];
+      const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
+      const mode = (document.querySelector('input[name="action"]:checked')?.value) || 'remove';
+    
+      if (!sel.value || Number.isNaN(stock)) {
+        info.innerHTML = sel.value ? `Current stock: <b>${opt?.dataset?.stock ?? 'n/a'}</b>` : '';
+        return;
+      }
+      const after = mode === 'add' ? stock + (qty || 0) : stock - (qty || 0);
+      info.innerHTML = `Current stock: <b>${stock}</b>${qty ? ` • After ${mode}: <b>${Math.max(after, 0)}</b>` : ''}`;
+    };
+
 
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
@@ -503,6 +541,7 @@
       const payload = {
         technician: data.get('technician')?.trim(),
         date: data.get('date'),
+        mode: data.get('action') || 'remove',   // <-- NEW
         products: []
       };
       for (let i=0; i<5; i++){
@@ -519,6 +558,28 @@
         return;
       }
 
+      // --- PREVENT REMOVING MORE THAN AVAILABLE ---
+      if (payload.mode === 'remove') {
+        const errors = [];
+        for (let i = 0; i < 5; i++) {
+          const sel = document.getElementById(`product${i}`);
+          const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
+          if (!sel || !sel.value || !qty) continue;
+          const opt = sel.selectedOptions?.[0];
+          const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
+          if (!Number.isNaN(stock) && qty > stock) {
+            errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
+          }
+        }
+        if (errors.length) {
+          showMsg(formMsg, errors.join(' '), 'warn');
+          submitBtn.disabled = false;
+          return;
+        }
+      }
+      // ------------------------------------------------
+
+      
       const controller = new AbortController();
       const t = setTimeout(()=>controller.abort(), 15000);
       try{
