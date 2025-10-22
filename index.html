@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <meta name="theme-color" content="#76b729">
-  <title>Technician Stock Removal</title>
+  <title>Workshop Stock Form</title>
 
   <!-- Fonts & Choices.js -->
   <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;700&display=swap" rel="stylesheet">
@@ -239,7 +239,7 @@
 <body>
   <div class="wrap">
     <img src="Shrekfeet Logo.png" alt="Shrekfeet Logo" class="logo" />
-    <h1>Technician Stock Removal</h1>
+    <h1>Workshop Stock Exchange Form</h1>
     <p class="subtle">Fill out your name, date, and up to five items to remove from stock.</p>
 
     <form id="stockForm" class="card" novalidate>
@@ -309,13 +309,17 @@
             <label for="product${index}">Product</label>
             <select id="product${index}" name="product${index}" aria-label="Product ${index+1}">
               <option value="">-- Select a product --</option>
-              ${products.map(p=>`<option value="${p.replaceAll('"','&quot;')}">${p}</option>`).join('')}
+              ${categories.map(cat => `
+                <optgroup label="${cat}">
+                  ${categoryMap[cat].map(p => `<option value="${p.replaceAll('"','&quot;')}">${p}</option>`).join('')}
+                </optgroup>
+              `).join('')}
             </select>
           </div>
           <div>
             <label for="quantity${index}">Quantity</label>
             <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index+1}"/>
-            <div class="help">Enter a whole number (min 1)</div>
+            <div class="help">Enter a number (e.g., 1)</div>
           </div>
         </div>
       `;
@@ -329,7 +333,7 @@
           searchEnabled:true,
           itemSelectText:'',
           shouldSort:false,
-          placeholderValue:'-- Select a product --',
+          placeholderValue:'--- Select a product ---',
           allowHTML:false
         });
         sel.dataset.choicesInit = '1';
@@ -391,9 +395,31 @@
           prodIdx = counts.indexOf(Math.max(...counts));
         }
         
-        const products = rows
-          .map(r => r?.c?.[prodIdx]?.v)
-          .filter(v => typeof v === 'string' && v.trim().length > 0);
+        // Find the "Category" column index (assuming column C has category)
+        let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
+        
+        // Fallback if not found
+        if (catIdx === -1) catIdx = 2; // typically column C
+        
+        // Build an object like { "Category A": ["Prod1", "Prod2"], "Category B": [...] }
+        const categoryMap = {};
+        rows.forEach(r => {
+          const prod = r?.c?.[prodIdx]?.v;
+          const cat = r?.c?.[catIdx]?.v || "Other";
+          if (prod) {
+            if (!categoryMap[cat]) categoryMap[cat] = [];
+            categoryMap[cat].push(prod);
+          }
+        });
+        
+        // Sort products within each category alphabetically
+        for (const cat in categoryMap) {
+          categoryMap[cat].sort((a,b) => a.localeCompare(b));
+        }
+        
+        // Flatten for dropdown building later
+        const categories = Object.keys(categoryMap);
+
 
 
         if (!products.length) throw new Error('No products found in sheet');
