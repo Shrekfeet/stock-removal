@@ -378,8 +378,23 @@
         const res = await fetch(url, {cache:'no-store'});
         const text = await res.text();
         const json = JSON.parse(text.substr(47).slice(0,-2));
-        const rows = json.table.rows || [];
-        const products = rows.map(r => r.c?.[0]?.v).filter(Boolean);
+        const { cols, rows } = json.table;
+
+        // Try to find the column labeled "Product" (case-insensitive)
+        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product'));
+        
+        // Fallback: if no "Product" header, use the column with most filled cells
+        if (prodIdx === -1) {
+          const counts = cols.map((_, i) =>
+            rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0)
+          );
+          prodIdx = counts.indexOf(Math.max(...counts));
+        }
+        
+        const products = rows
+          .map(r => r?.c?.[prodIdx]?.v)
+          .filter(v => typeof v === 'string' && v.trim().length > 0);
+
 
         if (!products.length) throw new Error('No products found in sheet');
 
