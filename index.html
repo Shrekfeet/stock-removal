@@ -257,7 +257,7 @@
     }
     .stock-info b { color: var(--green-700); }
 
-    /* Compact per-item toggle (Remove ⇄ Add) */
+    /* --- Compact Add/Remove toggle --- */
     .modewrap {
       display: inline-flex;
       align-items: center;
@@ -265,48 +265,65 @@
       margin-top: 6px;
       user-select: none;
     }
+    
     .modewrap .label {
       font-size: 12px;
-      color: var(--muted);
-      min-width: 42px;
-      text-align: center;
+      font-weight: 600;
+      transition: color 0.2s;
     }
+    
+    /* The switch container */
     .switch {
       position: relative;
-      width: 46px;
-      height: 26px;
+      width: 44px;
+      height: 24px;
       display: inline-block;
     }
+    
+    /* Hide the native checkbox */
     .switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
+    
+    /* Track */
     .switch .slider {
       position: absolute;
       inset: 0;
-      background: #d1d5db; /* neutral track */
+      background: #ef4444; /* red for remove (default) */
       border-radius: 999px;
-      transition: background .2s;
-      box-shadow: var(--shadow-soft);
+      transition: background 0.25s;
     }
+    
+    /* Knob */
     .switch .slider::before {
       content: "";
       position: absolute;
-      height: 20px;
-      width: 20px;
+      height: 18px;
+      width: 18px;
       left: 3px;
       top: 3px;
+      background: white;
       border-radius: 50%;
-      background: #fff;
-      transition: transform .2s;
-      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+      transition: transform 0.25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
     }
-    /* Checked = ADD (green), Unchecked = REMOVE (neutral) */
+    
+    /* Checked = ADD mode */
     .switch input:checked + .slider {
       background: var(--green);
     }
-    .switch input:checked + .
+    
+    /* Move knob when checked */
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
+    }
+    
+    /* Label colors */
+    .switch input:not(:checked) ~ .label-remove { color: #b91c1c; } /* red */
+    .switch input:checked ~ .label-add { color: var(--green-700); } /* green */
+
 
 
     /* Reduce motion */
@@ -334,17 +351,6 @@
           <input id="date" name="date" type="date" required/>
         </div>
       </div>
-
-      <fieldset class="mode" style="margin:8px 0 4px; border:0; padding:0;">
-        <legend style="font-weight:700; color:var(--green-700); margin-bottom:6px;">Action</legend>
-        <label style="margin-right:14px;">
-          <input type="radio" name="action" value="remove" checked> Remove from stock
-        </label>
-        <label>
-          <input type="radio" name="action" value="add"> Add to stock
-        </label>
-      </fieldset>
-
 
       <div id="productFields" aria-live="polite" aria-busy="true">
         <div class="msg" id="loadingMsg">Loading product list…</div>
@@ -409,12 +415,12 @@
     
             <!-- Per-item Add/Remove toggle -->
             <div class="modewrap" aria-label="Action toggle for item ${index + 1}">
-              <span class="label">Remove</span>
+              <span class="label label-remove">Remove</span>
               <label class="switch">
                 <input type="checkbox" id="mode${index}" name="mode${index}" aria-pressed="false" />
-                <span class="slider" aria-hidden="true"></span>
+                <span class="slider"></span>
               </label>
-              <span class="label">Add</span>
+              <span class="label label-add">Add</span>
             </div>
     
             <div class="help">Enter a whole number (min 1)</div>
@@ -555,12 +561,6 @@
         productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
-        // 👇 NEW: refresh stock previews whenever Add/Remove mode changes
-        document.querySelectorAll('input[name="action"]').forEach(radio => {
-          radio.addEventListener('change', () => {
-            for (let i = 0; i < 5; i++) updateStockPreview(i);
-          });
-        });
         // Initialize stock readouts (empty until a selection)
         for (let i=0;i<5;i++) updateStockInfo(i);
         toggleSubmitEnabled();
@@ -615,7 +615,6 @@
       const payload = {
         technician: data.get('technician')?.trim(),
         date: data.get('date'),
-        mode: data.get('action') || 'remove',   // <-- NEW
         products: []
       };
       for (let i = 0; i < 5; i++){
