@@ -174,6 +174,22 @@
       color: var(--green-600) !important; /* or use var(--green) if you prefer the brighter green */
     }
 
+    /* --- Add search icon + placeholder styling --- */
+    .choices__input--cloned {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%2376b729" viewBox="0 0 24 24"><path d="M10 2a8 8 0 105.29 14.29l4.48 4.47 1.42-1.42-4.47-4.48A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: 12px center;
+      background-size: 18px;
+      padding-left: 38px !important; /* make room for the icon */
+      font-size: 16px;
+      color: var(--text);
+    }
+    
+    .choices__input--cloned::placeholder {
+      color: var(--muted);
+      font-style: italic;
+    }
+
     /* Product block */
     .product{
       border:1px solid var(--border);
@@ -330,6 +346,7 @@
           itemSelectText:'',
           shouldSort:false,
           placeholderValue:'--- Select a product ---',
+          searchPlaceholderValue: 'Search for a product...',
           allowHTML:false
         });
         sel.dataset.choicesInit = '1';
