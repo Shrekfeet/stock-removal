@@ -490,6 +490,26 @@
             updateStockPreview(i);
           });
         }
+        // Inside addVisibilityLogic(), in the loop over items:
+        if (qty) {
+          qty.addEventListener('input', () => {
+            const nextBlock = blocks[index + 1];
+            if (nextBlock) {
+              const shouldShow = qty.value && parseInt(qty.value, 10) > 0;
+              nextBlock.style.display = shouldShow ? 'block' : 'none';
+            }
+            if (index === 4) {
+              const msg = document.getElementById('limitMessage');
+              const shouldShowMsg = qty.value && parseInt(qty.value, 10) > 0;
+              msg.style.display = shouldShowMsg ? 'block' : 'none';
+            }
+        
+            // ✅ Make sure this line is present:
+            updateStockPreview(index);
+            toggleSubmitEnabled();
+          });
+        }
+
       }
       document.getElementById('technician').addEventListener('input', toggleSubmitEnabled);
       dateInput.addEventListener('change', toggleSubmitEnabled);
@@ -561,6 +581,7 @@
         productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
+        for (let i = 0; i < 5; i++) updateStockPreview(i);
         // Initialize stock readouts (empty until a selection)
         for (let i=0;i<5;i++) updateStockInfo(i);
         toggleSubmitEnabled();
@@ -584,25 +605,45 @@
     };
 
 
-    // Show live "after add/remove" preview
+    // Replace your existing updateStockPreview with this:
     const updateStockPreview = (index) => {
       const sel = document.getElementById(`product${index}`);
-      const qty = parseInt((document.getElementById(`quantity${index}`)?.value || '0'), 10);
+      const qtyVal = document.getElementById(`quantity${index}`)?.value || '0';
+      const qty = parseInt(qtyVal, 10) || 0;
+    
       const info = document.getElementById(`stockInfo${index}`);
       if (!sel || !info) return;
     
       const opt = sel.selectedOptions?.[0];
-      const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
-      const modeEl = document.getElementById(`mode${index}`);
-      const mode = modeEl && modeEl.checked ? 'add' : 'remove';
+      const stockStr = opt?.dataset?.stock ?? 'n/a';
+      const stock = parseInt(stockStr, 10);
     
-      if (!sel.value || Number.isNaN(stock)) {
-        info.innerHTML = sel.value ? `Current stock: <b>${opt?.dataset?.stock ?? 'n/a'}</b>` : '';
+      // Default mode = remove (unless the per-item toggle is checked for "add")
+      const modeEl = document.getElementById(`mode${index}`);
+      const mode = (modeEl && modeEl.checked) ? 'add' : 'remove';
+    
+      // If no product selected, show nothing
+      if (!sel.value) {
+        info.innerHTML = '';
         return;
       }
-      const after = mode === 'add' ? stock + (qty || 0) : stock - (qty || 0);
-      info.innerHTML = `Current stock: <b>${stock}</b>${qty ? ` • After ${mode}: <b>${Math.max(after, 0)}</b>` : ''}`;
+    
+      // If stock is unknown (e.g., "n/a"), just show current stock text
+      if (Number.isNaN(stock)) {
+        info.innerHTML = `Current stock: <b>${stockStr}</b>`;
+        return;
+      }
+    
+      // If a quantity is entered, show AFTER immediately (defaults to remove)
+      if (qty > 0) {
+        const after = mode === 'add' ? stock + qty : stock - qty;
+        info.innerHTML = `Current stock: <b>${stock}</b> • After ${mode}: <b>${Math.max(after, 0)}</b>`;
+      } else {
+        // No qty yet — still show current stock
+        info.innerHTML = `Current stock: <b>${stock}</b>`;
+      }
     };
+
 
 
 
@@ -693,6 +734,8 @@
               updateStockPreview(i);           // refresh stock info line
             }
           }
+          // After you reset fields and toggles:
+          for (let i = 0; i < 5; i++) updateStockPreview(i);
         }else{
           showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
           submitBtn.disabled = false;
