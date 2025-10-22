@@ -381,7 +381,7 @@
         const { cols, rows } = json.table;
     
         // --- Find Product column index robustly ---
-        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product'));
+        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('item'));
         if (prodIdx === -1) {
           // Fallback: pick the column with the most non-empty cells
           const counts = cols.map((_, i) =>
