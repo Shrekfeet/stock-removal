@@ -41,7 +41,6 @@
       }
     }
 
-    /* Layout */
     html,body{height:100%}
     body{
       margin:0;
@@ -55,7 +54,6 @@
       padding:clamp(16px,3vw,28px);
     }
 
-    /* Header */
     .logo{
       display:block;
       max-width:160px;
@@ -79,7 +77,6 @@
       font-size:14px;
     }
 
-    /* Card */
     .card{
       background:var(--surface);
       border:1px solid var(--border);
@@ -88,19 +85,10 @@
       padding:clamp(14px,3.5vw,24px);
     }
 
-    /* Form grid */
-    .row{
-      display:grid;
-      gap:12px;
-    }
-    .row--split{
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    @media (min-width:640px){
-      .row--split{ grid-template-columns: 2fr 1fr; }
-    }
-    /* Prevent overflow on small screens (fixes date input overflow) */
+    .row{ display:grid; gap:12px; }
+    .row--split{ grid-template-columns: 1fr; gap:12px; }
+    @media (min-width:640px){ .row--split{ grid-template-columns: 2fr 1fr; } }
+
     .row > * { min-width: 0; }
 
     label{
@@ -109,15 +97,11 @@
       margin: 6px 0 6px;
       display:block;
     }
-    .help{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:6px;
-    }
+    .help{ font-size:12px; color:var(--muted); margin-top:6px; }
 
     input, .choices__inner{
       width:100%;
-      min-width:0; /* critical for mobile overflow */
+      min-width:0;
       height:50px;
       padding:12px 14px;
       font-size:16px;
@@ -137,20 +121,16 @@
       background:#fff;
     }
 
-    /* iOS/WebKit date input quirks: keep it inside container */
     input[type="date"]{
       appearance: none;
       -webkit-appearance: none;
       width:100%;
-      overflow:hidden;   /* prevents native icon from pushing width */
+      overflow:hidden;
       text-overflow: ellipsis;
     }
-    input[type="date"]::-webkit-date-and-time-value { text-align:left; }
-    input[type="date"]::-webkit-calendar-picker-indicator{
-      cursor:pointer;
-    }
+    input[type="date"]::-webkit-date-and-time-value{ text-align:left; }
+    input[type="date"]::-webkit-calendar-picker-indicator{ cursor:pointer; }
 
-    /* Choices tweaks */
     .choices{ margin-top:6px; font-size:16px; }
     .choices__inner{ min-height:50px; display:flex; align-items:center; }
     .choices.is-open .choices__inner{ border-radius:12px 12px 0 0; }
@@ -168,31 +148,22 @@
       background: var(--mint);
       color: var(--green-700) !important;
     }
-
     .choices__list--dropdown .choices__item,
     .choices__list[aria-expanded] .choices__item {
-      color: var(--green-600) !important; /* or use var(--green) if you prefer the brighter green */
+      color: var(--green-600) !important;
+    }
+    .choices .choices__input--cloned{
+      background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%2376b729" viewBox="0 0 24 24"><path d="M10 2a8 8 0 105.29 14.29l4.48 4.47 1.42-1.42-4.47-4.48A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/></svg>');
+      background-repeat:no-repeat!important;
+      background-position:12px center!important;
+      background-size:18px 18px!important;
+      padding-left:38px!important;
+      -webkit-appearance:none; appearance:none;
+    }
+    .choices .choices__input--cloned::placeholder{
+      font-size:14px; color:var(--muted); font-style:italic; opacity:.9;
     }
 
-    /* Magnifying glass in Choices search input (visible when dropdown is open) */
-    .choices .choices__input--cloned {
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%2376b729" viewBox="0 0 24 24"><path d="M10 2a8 8 0 105.29 14.29l4.48 4.47 1.42-1.42-4.47-4.48A8 8 0 0010 2zm0 2a6 6 0 110 12A6 6 0 0110 4z"/></svg>');
-      background-repeat: no-repeat !important;
-      background-position: 12px center !important;
-      background-size: 18px 18px !important;
-      padding-left: 38px !important;  /* space for icon */
-      -webkit-appearance: none;        /* iOS Safari */
-      appearance: none;
-    }
-    .choices .choices__input--cloned::placeholder {
-      font-size: 14px;   /* adjust to your liking */
-      color: var(--muted);
-      font-style: italic;
-      opacity: 0.9;
-    }
-
-
-    /* Product block */
     .product{
       border:1px solid var(--border);
       background:var(--surface);
@@ -201,14 +172,8 @@
       margin-top:12px;
       box-shadow:var(--shadow-soft);
     }
-    .product__title{
-      font-weight:700;
-      margin:0 0 6px;
-      font-size:15px;
-      color:var(--brown);
-    }
+    .product__title{ font-weight:700; margin:0 0 6px; font-size:15px; color:var(--brown); }
 
-    /* Buttons */
     .btn{
       margin-top:16px;
       padding:14px 16px;
@@ -221,112 +186,34 @@
       width:100%;
       cursor:pointer;
       transition:transform .05s ease, filter .2s, background .2s;
-      box-shadow: var(--shadow-soft);
+      box-shadow:var(--shadow-soft);
     }
     .btn:hover{ background:var(--green-600); }
-    .btn:active{ transform: scale(.99); }
+    .btn:active{ transform:scale(.99); }
     .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
-    /* Messages */
-    .msg{
-      margin-top:14px;
-      padding:12px 14px;
-      border-radius:12px;
-      font-size:14px;
-      border:1px solid var(--border);
-      background: #fff;
-    }
-    .msg--warn{ background: var(--mint); border-color: var(--green); color:#1d3a10; }
+    .msg{ margin-top:14px; padding:12px 14px; border-radius:12px; font-size:14px; border:1px solid var(--border); background:#fff; }
+    .msg--warn{ background:var(--mint); border-color:var(--green); color:#1d3a10; }
     .msg--error{ background:#fde7e7; border-color:#ffb4b4; color:#7f1d1d; }
     .msg--ok{ background:#e6f6ea; border-color:#a9e1bc; color:#0f5132; }
 
-    /* Footer note */
-    .footer-note{
-      text-align:center;
-      color:var(--muted);
-      margin-top:16px;
-      font-size:12px;
-    }
+    .footer-note{ text-align:center; color:var(--muted); margin-top:16px; font-size:12px; }
 
-    /* Stock readout under each product selector */
-    .stock-info {
-      margin-top: 6px;
-      font-size: 13px;
-      line-height: 1.3;
-      color: var(--muted);
-    }
-    .stock-info b { color: var(--green-700); }
+    .stock-info{ margin-top:6px; font-size:13px; line-height:1.3; color:var(--muted); }
+    .stock-info b{ color:var(--green-700); }
 
-    /* --- Compact Add/Remove toggle --- */
-    .modewrap {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 6px;
-      user-select: none;
-    }
-    
-    .modewrap .label {
-      font-size: 12px;
-      font-weight: 600;
-      transition: color 0.2s;
-    }
-    
-    /* The switch container */
-    .switch {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      display: inline-block;
-    }
-    
-    /* Hide the native checkbox */
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
-    /* Track */
-    .switch .slider {
-      position: absolute;
-      inset: 0;
-      background: #ef4444; /* red for remove (default) */
-      border-radius: 999px;
-      transition: background 0.25s;
-    }
-    
-    /* Knob */
-    .switch .slider::before {
-      content: "";
-      position: absolute;
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      top: 3px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.25s;
-      box-shadow: 0 1px 3px rgba(0,0,0,.2);
-    }
-    
-    /* Checked = ADD mode */
-    .switch input:checked + .slider {
-      background: var(--green);
-    }
-    
-    /* Move knob when checked */
-    .switch input:checked + .slider::before {
-      transform: translateX(20px);
-    }
-    
-    /* Label colors */
-    .switch input:not(:checked) ~ .label-remove { color: #b91c1c; } /* red */
-    .switch input:checked ~ .label-add { color: var(--green-700); } /* green */
+    /* Per-item toggle */
+    .modewrap{ display:inline-flex; align-items:center; gap:8px; margin-top:6px; user-select:none; }
+    .modewrap .label{ font-size:12px; font-weight:600; transition:color .2s; }
+    .switch{ position:relative; width:44px; height:24px; display:inline-block; }
+    .switch input{ opacity:0; width:0; height:0; }
+    .switch .slider{ position:absolute; inset:0; background:#ef4444; border-radius:999px; transition:background .25s; }
+    .switch .slider::before{ content:""; position:absolute; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+    .switch input:checked + .slider{ background:var(--green); }
+    .switch input:checked + .slider::before{ transform:translateX(20px); }
+    .switch input:not(:checked) ~ .label-remove{ color:#b91c1c; }
+    .switch input:checked ~ .label-add{ color:var(--green-700); }
 
-
-
-    /* Reduce motion */
     @media (prefers-reduced-motion: reduce){
       *{ animation:none !important; transition:none !important }
     }
@@ -384,16 +271,27 @@
     const formMsg = $('#formMsg');
     const limitMessage = $('#limitMessage');
 
-    // Autofill today's date
-    dateInput.valueAsDate = new Date();
+    // ✅ Cross-browser: auto-fill today's date + fallback
+    (function setToday(){
+      const today = new Date();
+      if ('valueAsDate' in dateInput) dateInput.valueAsDate = today;
+      if (!dateInput.value){
+        const y = today.getFullYear();
+        const m = String(today.getMonth()+1).padStart(2,'0');
+        const d = String(today.getDate()).padStart(2,'0');
+        dateInput.value = `${y}-${m}-${d}`;
+      }
+      dateInput.addEventListener('change', toggleSubmitEnabled);
+    })();
 
-    // Helpers
+    // Small helper
     const showMsg = (el, text, type='')=>{
       el.textContent = text;
       el.className = 'msg' + (type ? ' msg--' + type : '');
       el.style.display = text ? 'block' : 'none';
     };
 
+    // Build one product row
     const makeProductBlock = (index, optionsHTML) => {
       const wrap = document.createElement('div');
       wrap.className = 'product';
@@ -412,7 +310,7 @@
           <div>
             <label for="quantity${index}">Quantity</label>
             <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index + 1}"/>
-    
+
             <!-- Per-item Add/Remove toggle -->
             <div class="modewrap" aria-label="Action toggle for item ${index + 1}">
               <span class="label label-remove">Remove</span>
@@ -422,7 +320,7 @@
               </label>
               <span class="label label-add">Add</span>
             </div>
-    
+
             <div class="help">Enter a whole number (min 1)</div>
           </div>
         </div>
@@ -430,91 +328,80 @@
       return wrap;
     };
 
-
+    // Init Choices + wire change -> enable check
     const initChoicesForSelects = () => {
       $$('select').forEach(sel=>{
-        if (sel.dataset.choicesInit) return; // avoid double-init
+        if (sel.dataset.choicesInit) return;
         new Choices(sel, {
           searchEnabled:true,
           itemSelectText:'',
           shouldSort:false,
-          placeholderValue:'--- Select a product ---',
-          searchPlaceholderValue: 'Search for a product...',
+          placeholderValue:'-- Select a product --',
+          searchPlaceholderValue:'Search for a product...',
           allowHTML:false
         });
         sel.dataset.choicesInit = '1';
-        sel.addEventListener('change', ()=> { sel.setAttribute('value', sel.value || ''); });
+        sel.addEventListener('change', ()=>{
+          sel.setAttribute('value', sel.value || '');
+          toggleSubmitEnabled();        // <- make submit re-check on selection
+          updateStockPreview(Number(sel.id.replace('product',''))); // refresh preview if already typed qty
+        });
       });
     };
 
+    // Enable Submit when name+date present and at least one product+qty>0
     const toggleSubmitEnabled = () => {
-      const hasOneValid = Array.from({length:maxItems}).some((_,i)=>{
+      const nameOk = $('#technician').value.trim().length > 0;
+      const dateOk = !!dateInput.value;
+
+      let hasOneValid = false;
+      for (let i=0; i<maxItems; i++){
         const prod = document.getElementById(`product${i}`);
         const qty  = document.getElementById(`quantity${i}`);
-        return prod && qty && prod.value && qty.value && Number(qty.value) > 0;
-      });
-      const nameOk = document.getElementById('technician').value.trim().length > 0;
-      const dateOk = !!dateInput.value;
-      submitBtn.disabled = !(hasOneValid && nameOk && dateOk);
+        if (prod && qty && prod.value && Number(qty.value) > 0){ hasOneValid = true; break; }
+      }
+      submitBtn.disabled = !(nameOk && dateOk && hasOneValid);
     };
 
+    // Wire inputs to show next block, previews, and enable checks
     const addVisibilityLogic = () => {
       for (let i=0; i<maxItems; i++){
-        const qty = document.getElementById(`quantity${i}`);
-        if (!qty) continue;
-        qty.addEventListener('input', ()=>{
-          const val = parseInt(qty.value,10);
-          const next = productFields.children[i+1];
-          if (next){
-            next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-          }
-          if (i === maxItems-1){
-            limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-          }
-          updateStockPreview(index);
-          toggleSubmitEnabled();
-        });
+        const qty  = document.getElementById(`quantity${i}`);
         const prod = document.getElementById(`product${i}`);
-        if (prod){
-          prod.addEventListener('change', () => {
-            updateStockInfo(i);
-            updateStockPreview(index);
+        const modeEl = document.getElementById(`mode${i}`);
+
+        if (qty){
+          qty.addEventListener('input', ()=>{
+            const val = parseInt(qty.value,10);
+            const next = productFields.children[i+1];
+            if (next) next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+            if (i === maxItems-1) limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+            updateStockPreview(i);
             toggleSubmitEnabled();
           });
         }
-        const modeEl = document.getElementById(`mode${i}`);
-        if (modeEl) {
-          modeEl.addEventListener('change', () => {
-            // ARIA state (optional)
+
+        if (prod){
+          prod.addEventListener('change', ()=>{
+            updateStockInfo(i);
+            updateStockPreview(i);
+            toggleSubmitEnabled();
+          });
+        }
+
+        if (modeEl){
+          modeEl.addEventListener('change', ()=>{
             modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
             updateStockPreview(i);
           });
         }
-        // Inside addVisibilityLogic(), in the loop over items:
-        if (qty) {
-          qty.addEventListener('input', () => {
-            const nextBlock = blocks[index + 1];
-            if (nextBlock) {
-              const shouldShow = qty.value && parseInt(qty.value, 10) > 0;
-              nextBlock.style.display = shouldShow ? 'block' : 'none';
-            }
-            if (index === 4) {
-              const msg = document.getElementById('limitMessage');
-              const shouldShowMsg = qty.value && parseInt(qty.value, 10) > 0;
-              msg.style.display = shouldShowMsg ? 'block' : 'none';
-            }
-        
-            // ✅ Make sure this line is present:
-            updateStockPreview(index);
-            toggleSubmitEnabled();
-          });
-        }
-
       }
-      document.getElementById('technician').addEventListener('input', toggleSubmitEnabled);
+
+      $('#technician').addEventListener('input', toggleSubmitEnabled);
       dateInput.addEventListener('change', toggleSubmitEnabled);
     };
 
+    // Load products (with categories + stock)
     const loadProducts = async () => {
       try {
         const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
@@ -522,8 +409,8 @@
         const text = await res.text();
         const json = JSON.parse(text.substr(47).slice(0, -2));
         const { cols, rows } = json.table;
-    
-        // 1) Detect column indexes
+
+        // Detect columns
         let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('item'));
         if (prodIdx === -1) {
           const counts = cols.map((_, i) =>
@@ -531,16 +418,14 @@
           );
           prodIdx = counts.indexOf(Math.max(...counts));
         }
-    
         let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
-        if (catIdx === -1) catIdx = 2; // assume column C
-    
-        // Try common names for stock column
+        if (catIdx === -1) catIdx = 2;
+
         const isStockLike = s => /(stock|qty|quantity|on\s*hand|available)/i.test(s);
         let stockIdx = cols.findIndex(c => isStockLike(c?.label || ''));
-        if (stockIdx === -1) stockIdx = 3; // guess column D if header missing
-    
-        // 2) Build category -> array of {product, stock}
+        if (stockIdx === -1) stockIdx = 3;
+
+        // Map category -> [{product, stock}]
         const categoryMap = {};
         rows.forEach(r => {
           const product = r?.c?.[prodIdx]?.v;
@@ -548,18 +433,15 @@
           const category = (r?.c?.[catIdx]?.v || 'Other').toString();
           const stockRaw = r?.c?.[stockIdx]?.v;
           const stock = (stockRaw ?? '').toString().trim();
-    
           if (!categoryMap[category]) categoryMap[category] = [];
           categoryMap[category].push({ product: product.toString(), stock });
         });
-    
-        // 3) Sort categories and products
+
+        // Sort
         const categories = Object.keys(categoryMap).sort((a,b)=>a.localeCompare(b));
-        for (const k of categories) {
-          categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
-        }
-    
-        // 4) Build <optgroup> HTML (no stock in label; stock only in data-stock)
+        for (const k of categories) categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
+
+        // Build grouped options (stock only in data attribute)
         const optionsHTML = categories.map(cat => `
           <optgroup label="${cat.replaceAll('"','&quot;')}">
             ${categoryMap[cat].map(({product, stock}) => {
@@ -569,21 +451,22 @@
             }).join('')}
           </optgroup>
         `).join('');
-    
+
         if (!optionsHTML.trim()) throw new Error('No products found in sheet');
-    
-        // Build 5 product blocks
+
+        // Build 5 items
         productFields.innerHTML = '';
         for (let i = 0; i < 5; i++) {
           productFields.appendChild(makeProductBlock(i, optionsHTML));
         }
-    
+
         productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
+
+        // Prime previews (safe even before any selection)
         for (let i = 0; i < 5; i++) updateStockPreview(i);
-        // Initialize stock readouts (empty until a selection)
-        for (let i=0;i<5;i++) updateStockInfo(i);
+
         toggleSubmitEnabled();
       } catch (err) {
         console.error('Failed to load product list:', err);
@@ -592,61 +475,44 @@
       }
     };
 
-    // Show the selected option's stock in the readout
+    // Show selected product's stock
     const updateStockInfo = (index) => {
       const sel = document.getElementById(`product${index}`);
       const info = document.getElementById(`stockInfo${index}`);
       if (!sel || !info) return;
       const opt = sel.selectedOptions?.[0];
       const stock = opt?.dataset?.stock;
-      info.innerHTML = sel.value
-        ? `Current stock: <b>${stock ?? 'n/a'}</b>`
-        : '';
+      info.innerHTML = sel.value ? `Current stock: <b>${stock ?? 'n/a'}</b>` : '';
     };
 
-
-    // Replace your existing updateStockPreview with this:
+    // Live "after add/remove" preview (defaults to remove)
     const updateStockPreview = (index) => {
       const sel = document.getElementById(`product${index}`);
       const qtyVal = document.getElementById(`quantity${index}`)?.value || '0';
       const qty = parseInt(qtyVal, 10) || 0;
-    
+
       const info = document.getElementById(`stockInfo${index}`);
       if (!sel || !info) return;
-    
+
       const opt = sel.selectedOptions?.[0];
       const stockStr = opt?.dataset?.stock ?? 'n/a';
       const stock = parseInt(stockStr, 10);
-    
-      // Default mode = remove (unless the per-item toggle is checked for "add")
+
       const modeEl = document.getElementById(`mode${index}`);
       const mode = (modeEl && modeEl.checked) ? 'add' : 'remove';
-    
-      // If no product selected, show nothing
-      if (!sel.value) {
-        info.innerHTML = '';
-        return;
-      }
-    
-      // If stock is unknown (e.g., "n/a"), just show current stock text
-      if (Number.isNaN(stock)) {
-        info.innerHTML = `Current stock: <b>${stockStr}</b>`;
-        return;
-      }
-    
-      // If a quantity is entered, show AFTER immediately (defaults to remove)
+
+      if (!sel.value) { info.innerHTML = ''; return; }
+      if (Number.isNaN(stock)) { info.innerHTML = `Current stock: <b>${stockStr}</b>`; return; }
+
       if (qty > 0) {
         const after = mode === 'add' ? stock + qty : stock - qty;
         info.innerHTML = `Current stock: <b>${stock}</b> • After ${mode}: <b>${Math.max(after, 0)}</b>`;
       } else {
-        // No qty yet — still show current stock
         info.innerHTML = `Current stock: <b>${stock}</b>`;
       }
     };
 
-
-
-
+    // Submit
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       showMsg(formMsg, '', '');
@@ -663,7 +529,7 @@
         const quantity = data.get(`quantity${i}`);
         if (product && quantity && Number(quantity)>0){
           const mode = document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove';
-          payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode }); // ← per-item mode
+          payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode });
         }
       }
 
@@ -673,7 +539,7 @@
         return;
       }
 
-      // --- PREVENT REMOVING MORE THAN AVAILABLE (per item) ---
+      // Prevent over-removal per item
       const errors = [];
       for (let i = 0; i < 5; i++) {
         const sel = document.getElementById(`product${i}`);
@@ -682,7 +548,6 @@
         const opt = sel.selectedOptions?.[0];
         const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
         const add = document.getElementById(`mode${i}`)?.checked;
-      
         if (!add && !Number.isNaN(stock) && qty > stock) {
           errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
         }
@@ -692,14 +557,11 @@
         submitBtn.disabled = false;
         return;
       }
-      // -------------------------------------------------------
 
-
-      
       const controller = new AbortController();
       const t = setTimeout(()=>controller.abort(), 15000);
       try{
-        const res = await fetch('https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4', {
+        const res = await fetch(webhookURL, {
           method:'POST',
           body: JSON.stringify(payload),
           headers:{ 'Content-Type':'application/json' },
@@ -710,6 +572,8 @@
         if (res.ok){
           showMsg(formMsg, 'Form submitted successfully!', 'ok');
           form.reset();
+
+          // Soft reset UI
           for (let i=0; i<5; i++){
             const sel = document.getElementById(`product${i}`);
             const qty = document.getElementById(`quantity${i}`);
@@ -722,20 +586,21 @@
             block.style.display = i===0 ? 'block' : 'none';
           }
           limitMessage.style.display='none';
-          dateInput.valueAsDate = new Date();
-          toggleSubmitEnabled();
 
-          // Reset all per-item toggles to "Remove" (unchecked)
+          // Refill date & reset toggles
+          (function setToday(){ const t=new Date(); if ('valueAsDate' in dateInput) dateInput.valueAsDate=t; if(!dateInput.value){const y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0'); dateInput.value=`${y}-${m}-${d}`;} })();
+
           for (let i = 0; i < 5; i++) {
             const modeEl = document.getElementById(`mode${i}`);
             if (modeEl) {
-              modeEl.checked = false;          // switch back to Remove
+              modeEl.checked = false;
               modeEl.setAttribute('aria-pressed','false');
-              updateStockPreview(i);           // refresh stock info line
+              updateStockPreview(i);
             }
           }
-          // After you reset fields and toggles:
           for (let i = 0; i < 5; i++) updateStockPreview(i);
+
+          toggleSubmitEnabled();
         }else{
           showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
           submitBtn.disabled = false;
