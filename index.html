@@ -257,6 +257,58 @@
     }
     .stock-info b { color: var(--green-700); }
 
+    /* Compact per-item toggle (Remove ⇄ Add) */
+    .modewrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      user-select: none;
+    }
+    .modewrap .label {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 42px;
+      text-align: center;
+    }
+    .switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      display: inline-block;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch .slider {
+      position: absolute;
+      inset: 0;
+      background: #d1d5db; /* neutral track */
+      border-radius: 999px;
+      transition: background .2s;
+      box-shadow: var(--shadow-soft);
+    }
+    .switch .slider::before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+    /* Checked = ADD (green), Unchecked = REMOVE (neutral) */
+    .switch input:checked + .slider {
+      background: var(--green);
+    }
+    .switch input:checked + .
+
+
     /* Reduce motion */
     @media (prefers-reduced-motion: reduce){
       *{ animation:none !important; transition:none !important }
@@ -354,12 +406,24 @@
           <div>
             <label for="quantity${index}">Quantity</label>
             <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index + 1}"/>
+    
+            <!-- Per-item Add/Remove toggle -->
+            <div class="modewrap" aria-label="Action toggle for item ${index + 1}">
+              <span class="label">Remove</span>
+              <label class="switch">
+                <input type="checkbox" id="mode${index}" name="mode${index}" aria-pressed="false" />
+                <span class="slider" aria-hidden="true"></span>
+              </label>
+              <span class="label">Add</span>
+            </div>
+    
             <div class="help">Enter a whole number (min 1)</div>
           </div>
         </div>
       `;
       return wrap;
     };
+
 
     const initChoicesForSelects = () => {
       $$('select').forEach(sel=>{
@@ -410,6 +474,14 @@
             updateStockInfo(i);
             updateStockPreview(index);
             toggleSubmitEnabled();
+          });
+        }
+        const modeEl = document.getElementById(`mode${i}`);
+        if (modeEl) {
+          modeEl.addEventListener('change', () => {
+            // ARIA state (optional)
+            modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
+            updateStockPreview(i);
           });
         }
       }
@@ -521,7 +593,8 @@
     
       const opt = sel.selectedOptions?.[0];
       const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
-      const mode = (document.querySelector('input[name="action"]:checked')?.value) || 'remove';
+      const modeEl = document.getElementById(`mode${index}`);
+      const mode = modeEl && modeEl.checked ? 'add' : 'remove';
     
       if (!sel.value || Number.isNaN(stock)) {
         info.innerHTML = sel.value ? `Current stock: <b>${opt?.dataset?.stock ?? 'n/a'}</b>` : '';
@@ -530,6 +603,7 @@
       const after = mode === 'add' ? stock + (qty || 0) : stock - (qty || 0);
       info.innerHTML = `Current stock: <b>${stock}</b>${qty ? ` • After ${mode}: <b>${Math.max(after, 0)}</b>` : ''}`;
     };
+
 
 
     form.addEventListener('submit', async (e)=>{
@@ -544,11 +618,12 @@
         mode: data.get('action') || 'remove',   // <-- NEW
         products: []
       };
-      for (let i=0; i<5; i++){
+      for (let i = 0; i < 5; i++){
         const product = data.get(`product${i}`);
         const quantity = data.get(`quantity${i}`);
         if (product && quantity && Number(quantity)>0){
-          payload.products.push({ product, quantity: String(parseInt(quantity,10)) });
+          const mode = document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove';
+          payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode }); // ← per-item mode
         }
       }
 
@@ -558,26 +633,27 @@
         return;
       }
 
-      // --- PREVENT REMOVING MORE THAN AVAILABLE ---
-      if (payload.mode === 'remove') {
-        const errors = [];
-        for (let i = 0; i < 5; i++) {
-          const sel = document.getElementById(`product${i}`);
-          const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
-          if (!sel || !sel.value || !qty) continue;
-          const opt = sel.selectedOptions?.[0];
-          const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
-          if (!Number.isNaN(stock) && qty > stock) {
-            errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
-          }
-        }
-        if (errors.length) {
-          showMsg(formMsg, errors.join(' '), 'warn');
-          submitBtn.disabled = false;
-          return;
+      // --- PREVENT REMOVING MORE THAN AVAILABLE (per item) ---
+      const errors = [];
+      for (let i = 0; i < 5; i++) {
+        const sel = document.getElementById(`product${i}`);
+        const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
+        if (!sel || !sel.value || !qty) continue;
+        const opt = sel.selectedOptions?.[0];
+        const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
+        const add = document.getElementById(`mode${i}`)?.checked;
+      
+        if (!add && !Number.isNaN(stock) && qty > stock) {
+          errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
         }
       }
-      // ------------------------------------------------
+      if (errors.length) {
+        showMsg(formMsg, errors.join(' '), 'warn');
+        submitBtn.disabled = false;
+        return;
+      }
+      // -------------------------------------------------------
+
 
       
       const controller = new AbortController();
@@ -608,6 +684,16 @@
           limitMessage.style.display='none';
           dateInput.valueAsDate = new Date();
           toggleSubmitEnabled();
+
+          // Reset all per-item toggles to "Remove" (unchecked)
+          for (let i = 0; i < 5; i++) {
+            const modeEl = document.getElementById(`mode${i}`);
+            if (modeEl) {
+              modeEl.checked = false;          // switch back to Remove
+              modeEl.setAttribute('aria-pressed','false');
+              updateStockPreview(i);           // refresh stock info line
+            }
+          }
         }else{
           showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
           submitBtn.disabled = false;
