@@ -256,453 +256,453 @@
   </div>
 
   <script>
-  window.addEventListener('DOMContentLoaded', function(){
-    const sheetID   = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
-    const webhookURL= 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
-    const maxItems  = 5;
-    // <<< SET THIS to the tab name that holds the products >>>
-    const SHEET_TAB_NAME = 'Sheet1';  // <-- change 'Products' to your actual tab name
-
-    const $ = (sel,root=document)=>root.querySelector(sel);
-    const $$= (sel,root=document)=>Array.from(root.querySelectorAll(sel));
-
-    const form = $('#stockForm');
-    const dateInput = $('#date');
-    const productFields = $('#productFields');
-    const submitBtn = $('#submitBtn');
-    const formMsg = $('#formMsg');
-    const limitMessage = $('#limitMessage');
-
-    // Fetch text with timeout + simple retry (handles transient 429/5xx)
-    async function fetchTextWithRetry(url, {timeoutMs = 12000, retries = 2} = {}) {
-      const attempt = async (n) => {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
-          clearTimeout(t);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return await res.text();
-        } catch (e) {
-          clearTimeout(t);
-          if (n < retries) {
-            // backoff: 500ms, 1000ms...
-            await new Promise(r => setTimeout(r, 500 * (n + 1)));
-            return attempt(n + 1);
+    window.addEventListener('DOMContentLoaded', function(){
+      const sheetID   = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
+      const webhookURL= 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
+      const maxItems  = 5;
+      // <<< SET THIS to the tab name that holds the products >>>
+      const SHEET_TAB_NAME = 'Sheet1';  // <-- change 'Products' to your actual tab name
+  
+      const $ = (sel,root=document)=>root.querySelector(sel);
+      const $$= (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  
+      const form = $('#stockForm');
+      const dateInput = $('#date');
+      const productFields = $('#productFields');
+      const submitBtn = $('#submitBtn');
+      const formMsg = $('#formMsg');
+      const limitMessage = $('#limitMessage');
+  
+      // Fetch text with timeout + simple retry (handles transient 429/5xx)
+      async function fetchTextWithRetry(url, {timeoutMs = 12000, retries = 2} = {}) {
+        const attempt = async (n) => {
+          const controller = new AbortController();
+          const t = setTimeout(() => controller.abort(), timeoutMs);
+          try {
+            const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+            clearTimeout(t);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.text();
+          } catch (e) {
+            clearTimeout(t);
+            if (n < retries) {
+              // backoff: 500ms, 1000ms...
+              await new Promise(r => setTimeout(r, 500 * (n + 1)));
+              return attempt(n + 1);
+            }
+            throw e;
           }
-          throw e;
-        }
-      };
-      return attempt(0);
-    }
-    
-    // Parse GViz safely (survives prefix changes)
-    function parseGViz(text) {
-      const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
-      if (!m) throw new Error('Unexpected response (no GViz payload) — check sheet sharing or gid.');
-      return JSON.parse(m[1]);
-    }
-
-
-    // ✅ Cross-browser: auto-fill today's date + fallback
-    (function setToday(){
-      const today = new Date();
-      if ('valueAsDate' in dateInput) dateInput.valueAsDate = today;
-      if (!dateInput.value){
-        const y = today.getFullYear();
-        const m = String(today.getMonth()+1).padStart(2,'0');
-        const d = String(today.getDate()).padStart(2,'0');
-        dateInput.value = `${y}-${m}-${d}`;
+        };
+        return attempt(0);
       }
-      dateInput.addEventListener('change', toggleSubmitEnabled);
-    })();
+      
+      // Parse GViz safely (survives prefix changes)
+      function parseGViz(text) {
+        const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
+        if (!m) throw new Error('Unexpected response (no GViz payload) — check sheet sharing or gid.');
+        return JSON.parse(m[1]);
+      }
 
-    // Small helper
-    const showMsg = (el, text, type='')=>{
-      el.textContent = text;
-      el.className = 'msg' + (type ? ' msg--' + type : '');
-      el.style.display = text ? 'block' : 'none';
-    };
-
-    // Build one product row
-    const makeProductBlock = (index, optionsHTML) => {
-      const wrap = document.createElement('div');
-      wrap.className = 'product';
-      wrap.style.display = index === 0 ? 'block' : 'none';
-      wrap.innerHTML = `
-        <p class="product__title">Item ${index + 1}</p>
-        <div class="row row--split">
-          <div>
-            <label for="product${index}">Product</label>
-            <select id="product${index}" name="product${index}" aria-label="Product ${index + 1}">
-              <option value="">-- Select a product --</option>
-              ${optionsHTML}
-            </select>
-            <div id="stockInfo${index}" class="stock-info" aria-live="polite"></div>
-          </div>
-          <div>
-            <label for="quantity${index}">Quantity</label>
-            <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index + 1}"/>
-
-            <!-- Per-item Add/Remove toggle -->
-            <div class="modewrap" aria-label="Action toggle for item ${index + 1}">
-              <span class="label label-remove">Remove</span>
-              <label class="switch">
-                <input type="checkbox" id="mode${index}" name="mode${index}" aria-pressed="false" />
-                <span class="slider"></span>
-              </label>
-              <span class="label label-add">Add</span>
+      // Put this ABOVE setToday() and any listeners that reference it
+      function toggleSubmitEnabled() {
+        const nameOk = document.getElementById('technician').value.trim().length > 0;
+        const dateOk = !!document.getElementById('date').value;
+      
+        let hasOneValid = false;
+        for (let i = 0; i < 5; i++) {
+          const prod = document.getElementById(`product${i}`);
+          const qty  = document.getElementById(`quantity${i}`);
+          if (prod && qty && prod.value && Number(qty.value) > 0) { hasOneValid = true; break; }
+        }
+      
+        document.getElementById('submitBtn').disabled = !(nameOk && dateOk && hasOneValid);
+      }
+  
+  
+      // ✅ Cross-browser: auto-fill today's date + fallback
+      (function setToday(){
+        const today = new Date();
+        if ('valueAsDate' in dateInput) dateInput.valueAsDate = today;
+        if (!dateInput.value){
+          const y = today.getFullYear();
+          const m = String(today.getMonth()+1).padStart(2,'0');
+          const d = String(today.getDate()).padStart(2,'0');
+          dateInput.value = `${y}-${m}-${d}`;
+        }
+        dateInput.addEventListener('change', toggleSubmitEnabled);
+      })();
+  
+      // Small helper
+      const showMsg = (el, text, type='')=>{
+        el.textContent = text;
+        el.className = 'msg' + (type ? ' msg--' + type : '');
+        el.style.display = text ? 'block' : 'none';
+      };
+  
+      // Build one product row
+      const makeProductBlock = (index, optionsHTML) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'product';
+        wrap.style.display = index === 0 ? 'block' : 'none';
+        wrap.innerHTML = `
+          <p class="product__title">Item ${index + 1}</p>
+          <div class="row row--split">
+            <div>
+              <label for="product${index}">Product</label>
+              <select id="product${index}" name="product${index}" aria-label="Product ${index + 1}">
+                <option value="">-- Select a product --</option>
+                ${optionsHTML}
+              </select>
+              <div id="stockInfo${index}" class="stock-info" aria-live="polite"></div>
             </div>
-
-            <div class="help">Enter a whole number (min 1)</div>
+            <div>
+              <label for="quantity${index}">Quantity</label>
+              <input id="quantity${index}" name="quantity${index}" type="number" inputmode="numeric" min="1" step="1" placeholder="0" aria-label="Quantity for product ${index + 1}"/>
+  
+              <!-- Per-item Add/Remove toggle -->
+              <div class="modewrap" aria-label="Action toggle for item ${index + 1}">
+                <span class="label label-remove">Remove</span>
+                <label class="switch">
+                  <input type="checkbox" id="mode${index}" name="mode${index}" aria-pressed="false" />
+                  <span class="slider"></span>
+                </label>
+                <span class="label label-add">Add</span>
+              </div>
+  
+              <div class="help">Enter a whole number (min 1)</div>
+            </div>
           </div>
-        </div>
-      `;
-      return wrap;
-    };
-
-    // Init Choices + wire change -> enable check (resilient)
-    const initChoicesForSelects = () => {
-      const tryInit = () => {
-        if (!window.Choices) {
-          // Retry shortly in case the CDN was a touch slow
-          return setTimeout(tryInit, 150);
-        }
-        document.querySelectorAll('select').forEach(sel => {
-          if (sel.dataset.choicesInit) return;
-          new Choices(sel, {
-            searchEnabled: true,
-            itemSelectText: '',
-            shouldSort: false,
-            placeholderValue: '-- Select a product --',
-            searchPlaceholderValue: 'Search for a product...',
-            allowHTML: false
-          });
-          sel.dataset.choicesInit = '1';
-    
-          // Keep FormData happy & re-check submit state
-          sel.addEventListener('change', () => {
-            sel.setAttribute('value', sel.value || '');
-            toggleSubmitEnabled();
-            updateStockPreview(Number(sel.id.replace('product','')));
-          });
-        });
+        `;
+        return wrap;
       };
-      tryInit();
-    };
-
-
-    // Enable Submit when name+date present and at least one product+qty>0
-    const toggleSubmitEnabled = () => {
-      const nameOk = $('#technician').value.trim().length > 0;
-      const dateOk = !!dateInput.value;
-
-      let hasOneValid = false;
-      for (let i=0; i<maxItems; i++){
-        const prod = document.getElementById(`product${i}`);
-        const qty  = document.getElementById(`quantity${i}`);
-        if (prod && qty && prod.value && Number(qty.value) > 0){ hasOneValid = true; break; }
-      }
-      submitBtn.disabled = !(nameOk && dateOk && hasOneValid);
-    };
-
-    // Wire inputs to show next block, previews, and enable checks
-    const addVisibilityLogic = () => {
-      for (let i=0; i<maxItems; i++){
-        const qty  = document.getElementById(`quantity${i}`);
-        const prod = document.getElementById(`product${i}`);
-        const modeEl = document.getElementById(`mode${i}`);
-
-        if (qty){
-          qty.addEventListener('input', ()=>{
-            const val = parseInt(qty.value,10);
-            const next = productFields.children[i+1];
-            if (next) next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-            if (i === maxItems-1) limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-            updateStockPreview(i);
-            toggleSubmitEnabled();
-          });
-        }
-
-        if (prod){
-          prod.addEventListener('change', ()=>{
-            updateStockInfo(i);
-            updateStockPreview(i);
-            toggleSubmitEnabled();
-          });
-        }
-
-        if (modeEl){
-          modeEl.addEventListener('change', ()=>{
-            modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
-            updateStockPreview(i);
-          });
-        }
-      }
-
-      $('#technician').addEventListener('input', toggleSubmitEnabled);
-      dateInput.addEventListener('change', toggleSubmitEnabled);
-    };
-
-    // Completely updated loader (safe, resilient, and sorted)
-    const loadProducts = async () => {
-    // local helpers
-    const fetchTextWithRetry = async (url, { timeoutMs = 12000, retries = 2 } = {}) => {
-      const attempt = async (n) => {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-          const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
-          clearTimeout(t);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return await res.text();
-        } catch (e) {
-          clearTimeout(t);
-          if (n < retries) {
-            await new Promise(r => setTimeout(r, 600 * (n + 1)));
-            return attempt(n + 1);
+  
+      // Init Choices + wire change -> enable check (resilient)
+      const initChoicesForSelects = () => {
+        const tryInit = () => {
+          if (!window.Choices) {
+            // Retry shortly in case the CDN was a touch slow
+            return setTimeout(tryInit, 150);
           }
-          throw e;
+          document.querySelectorAll('select').forEach(sel => {
+            if (sel.dataset.choicesInit) return;
+            new Choices(sel, {
+              searchEnabled: true,
+              itemSelectText: '',
+              shouldSort: false,
+              placeholderValue: '-- Select a product --',
+              searchPlaceholderValue: 'Search for a product...',
+              allowHTML: false
+            });
+            sel.dataset.choicesInit = '1';
+      
+            // Keep FormData happy & re-check submit state
+            sel.addEventListener('change', () => {
+              sel.setAttribute('value', sel.value || '');
+              toggleSubmitEnabled();
+              updateStockPreview(Number(sel.id.replace('product','')));
+            });
+          });
+        };
+        tryInit();
+      };
+  
+      // Wire inputs to show next block, previews, and enable checks
+      const addVisibilityLogic = () => {
+        for (let i=0; i<maxItems; i++){
+          const qty  = document.getElementById(`quantity${i}`);
+          const prod = document.getElementById(`product${i}`);
+          const modeEl = document.getElementById(`mode${i}`);
+  
+          if (qty){
+            qty.addEventListener('input', ()=>{
+              const val = parseInt(qty.value,10);
+              const next = productFields.children[i+1];
+              if (next) next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+              if (i === maxItems-1) limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+              updateStockPreview(i);
+              toggleSubmitEnabled();
+            });
+          }
+  
+          if (prod){
+            prod.addEventListener('change', ()=>{
+              updateStockInfo(i);
+              updateStockPreview(i);
+              toggleSubmitEnabled();
+            });
+          }
+  
+          if (modeEl){
+            modeEl.addEventListener('change', ()=>{
+              modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
+              updateStockPreview(i);
+            });
+          }
+        }
+  
+        $('#technician').addEventListener('input', toggleSubmitEnabled);
+        dateInput.addEventListener('change', toggleSubmitEnabled);
+      };
+  
+      // Completely updated loader (safe, resilient, and sorted)
+      const loadProducts = async () => {
+      // local helpers
+      const fetchTextWithRetry = async (url, { timeoutMs = 12000, retries = 2 } = {}) => {
+        const attempt = async (n) => {
+          const controller = new AbortController();
+          const t = setTimeout(() => controller.abort(), timeoutMs);
+          try {
+            const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+            clearTimeout(t);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.text();
+          } catch (e) {
+            clearTimeout(t);
+            if (n < retries) {
+              await new Promise(r => setTimeout(r, 600 * (n + 1)));
+              return attempt(n + 1);
+            }
+            throw e;
+          }
+        };
+        return attempt(0);
+      };
+    
+      const parseGViz = (text) => {
+        const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
+        if (!m) throw new Error('Unexpected response (no GViz payload) — check sharing or tab name.');
+        return JSON.parse(m[1]);
+      };
+    
+      // Build a URL that targets the specific tab by NAME, with a cache-buster
+      const base = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+      const withSheet = `${base}&sheet=${encodeURIComponent(SHEET_TAB_NAME)}&rand=${Date.now()}`;
+      const fallback = `${base}&rand=${Date.now()}`; // fallback to first tab if named tab fails
+    
+      try {
+        // Try the named tab first
+        let text, json;
+        try {
+          text = await fetchTextWithRetry(withSheet, { timeoutMs: 12000, retries: 2 });
+          json = parseGViz(text);
+        } catch (e1) {
+          console.warn('Named tab fetch failed, trying first tab as fallback:', e1?.message);
+          text = await fetchTextWithRetry(fallback, { timeoutMs: 12000, retries: 1 });
+          json = parseGViz(text);
+        }
+    
+        const table = json?.table;
+        if (!table || !Array.isArray(table.rows)) throw new Error('No rows found in GViz table.');
+    
+        const { cols, rows } = table;
+    
+        // Detect columns (Product / Category / Stock)
+        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product') || (c?.label || '').toLowerCase().includes('item'));
+        if (prodIdx === -1) {
+          const counts = cols.map((_, i) => rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0));
+          prodIdx = counts.indexOf(Math.max(...counts));
+        }
+        let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
+        if (catIdx === -1) catIdx = 2;
+    
+        const isStockLike = s => /(stock|qty|quantity|on\s*hand|available)/i.test(s);
+        let stockIdx = cols.findIndex(c => isStockLike(c?.label || ''));
+        if (stockIdx === -1) stockIdx = 3;
+    
+        // Build category -> [{product, stock}]
+        const categoryMap = {};
+        rows.forEach(r => {
+          const product = r?.c?.[prodIdx]?.v;
+          if (!product) return;
+          const category = (r?.c?.[catIdx]?.v || 'Other').toString();
+          const stockRaw = r?.c?.[stockIdx]?.v;
+          const stock = (stockRaw ?? '').toString().trim();
+          (categoryMap[category] ||= []).push({ product: product.toString(), stock });
+        });
+    
+        const categories = Object.keys(categoryMap).sort((a,b)=>a.localeCompare(b));
+        for (const k of categories) categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
+    
+        const optionsHTML = categories.map(cat => `
+          <optgroup label="${cat.replaceAll('"','&quot;')}">
+            ${categoryMap[cat].map(({ product, stock }) => {
+              const safe = product.replaceAll('"','&quot;');
+              const stockText = (stock ?? '').toString().trim() || 'n/a';
+              return `<option value="${safe}" data-stock="${stockText}">${safe}</option>`;
+            }).join('')}
+          </optgroup>
+        `).join('');
+    
+        if (!optionsHTML.trim()) throw new Error('No products found in sheet (product column empty?).');
+    
+        // Render rows
+        productFields.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+          productFields.appendChild(makeProductBlock(i, optionsHTML));
+        }
+    
+        productFields.setAttribute('aria-busy', 'false');
+        initChoicesForSelects();
+        addVisibilityLogic();
+    
+        for (let i = 0; i < 5; i++) updateStockPreview(i);
+        toggleSubmitEnabled();
+    
+      } catch (err) {
+        console.error('Failed to load product list:', err);
+        showMsg(formMsg, (err && err.message)
+          ? `Failed to load product list: ${err.message}`
+          : 'Failed to load product list. Please try again later.', 'error');
+      } finally {
+        productFields.setAttribute('aria-busy', 'false');
+        const loading = document.getElementById('loadingMsg');
+        if (loading) loading.remove();
+      }
+    };
+  
+  
+  
+      // Show selected product's stock
+      const updateStockInfo = (index) => {
+        const sel = document.getElementById(`product${index}`);
+        const info = document.getElementById(`stockInfo${index}`);
+        if (!sel || !info) return;
+        const opt = sel.selectedOptions?.[0];
+        const stock = opt?.dataset?.stock;
+        info.innerHTML = sel.value ? `Current stock: <b>${stock ?? 'n/a'}</b>` : '';
+      };
+  
+      // Live "after add/remove" preview (defaults to remove)
+      const updateStockPreview = (index) => {
+        const sel = document.getElementById(`product${index}`);
+        const qtyVal = document.getElementById(`quantity${index}`)?.value || '0';
+        const qty = parseInt(qtyVal, 10) || 0;
+  
+        const info = document.getElementById(`stockInfo${index}`);
+        if (!sel || !info) return;
+  
+        const opt = sel.selectedOptions?.[0];
+        const stockStr = opt?.dataset?.stock ?? 'n/a';
+        const stock = parseInt(stockStr, 10);
+  
+        const modeEl = document.getElementById(`mode${index}`);
+        const mode = (modeEl && modeEl.checked) ? 'add' : 'remove';
+  
+        if (!sel.value) { info.innerHTML = ''; return; }
+        if (Number.isNaN(stock)) { info.innerHTML = `Current stock: <b>${stockStr}</b>`; return; }
+  
+        if (qty > 0) {
+          const after = mode === 'add' ? stock + qty : stock - qty;
+          info.innerHTML = `Current stock: <b>${stock}</b> • After ${mode}: <b>${Math.max(after, 0)}</b>`;
+        } else {
+          info.innerHTML = `Current stock: <b>${stock}</b>`;
         }
       };
-      return attempt(0);
-    };
   
-    const parseGViz = (text) => {
-      const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
-      if (!m) throw new Error('Unexpected response (no GViz payload) — check sharing or tab name.');
-      return JSON.parse(m[1]);
-    };
+      // Submit
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        showMsg(formMsg, '', '');
+        submitBtn.disabled = true;
   
-    // Build a URL that targets the specific tab by NAME, with a cache-buster
-    const base = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-    const withSheet = `${base}&sheet=${encodeURIComponent(SHEET_TAB_NAME)}&rand=${Date.now()}`;
-    const fallback = `${base}&rand=${Date.now()}`; // fallback to first tab if named tab fails
+        const data = new FormData(form);
+        const payload = {
+          technician: data.get('technician')?.trim(),
+          date: data.get('date'),
+          products: []
+        };
+        for (let i = 0; i < 5; i++){
+          const product = data.get(`product${i}`);
+          const quantity = data.get(`quantity${i}`);
+          if (product && quantity && Number(quantity)>0){
+            const mode = document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove';
+            payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode });
+          }
+        }
   
-    try {
-      // Try the named tab first
-      let text, json;
-      try {
-        text = await fetchTextWithRetry(withSheet, { timeoutMs: 12000, retries: 2 });
-        json = parseGViz(text);
-      } catch (e1) {
-        console.warn('Named tab fetch failed, trying first tab as fallback:', e1?.message);
-        text = await fetchTextWithRetry(fallback, { timeoutMs: 12000, retries: 1 });
-        json = parseGViz(text);
-      }
+        if (!payload.products.length){
+          showMsg(formMsg, 'Please select at least one product with a quantity of 1 or more.', 'warn');
+          submitBtn.disabled = false;
+          return;
+        }
   
-      const table = json?.table;
-      if (!table || !Array.isArray(table.rows)) throw new Error('No rows found in GViz table.');
+        // Prevent over-removal per item
+        const errors = [];
+        for (let i = 0; i < 5; i++) {
+          const sel = document.getElementById(`product${i}`);
+          const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
+          if (!sel || !sel.value || !qty) continue;
+          const opt = sel.selectedOptions?.[0];
+          const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
+          const add = document.getElementById(`mode${i}`)?.checked;
+          if (!add && !Number.isNaN(stock) && qty > stock) {
+            errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
+          }
+        }
+        if (errors.length) {
+          showMsg(formMsg, errors.join(' '), 'warn');
+          submitBtn.disabled = false;
+          return;
+        }
   
-      const { cols, rows } = table;
+        const controller = new AbortController();
+        const t = setTimeout(()=>controller.abort(), 15000);
+        try{
+          const res = await fetch(webhookURL, {
+            method:'POST',
+            body: JSON.stringify(payload),
+            headers:{ 'Content-Type':'application/json' },
+            signal: controller.signal
+          });
+          clearTimeout(t);
   
-      // Detect columns (Product / Category / Stock)
-      let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product') || (c?.label || '').toLowerCase().includes('item'));
-      if (prodIdx === -1) {
-        const counts = cols.map((_, i) => rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0));
-        prodIdx = counts.indexOf(Math.max(...counts));
-      }
-      let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
-      if (catIdx === -1) catIdx = 2;
+          if (res.ok){
+            showMsg(formMsg, 'Form submitted successfully!', 'ok');
+            form.reset();
   
-      const isStockLike = s => /(stock|qty|quantity|on\s*hand|available)/i.test(s);
-      let stockIdx = cols.findIndex(c => isStockLike(c?.label || ''));
-      if (stockIdx === -1) stockIdx = 3;
+            // Soft reset UI
+            for (let i=0; i<5; i++){
+              const sel = document.getElementById(`product${i}`);
+              const qty = document.getElementById(`quantity${i}`);
+              if (sel){
+                sel.value = '';
+                sel.dispatchEvent(new Event('change',{bubbles:true}));
+              }
+              if (qty){ qty.value=''; }
+              const block = productFields.children[i];
+              block.style.display = i===0 ? 'block' : 'none';
+            }
+            limitMessage.style.display='none';
   
-      // Build category -> [{product, stock}]
-      const categoryMap = {};
-      rows.forEach(r => {
-        const product = r?.c?.[prodIdx]?.v;
-        if (!product) return;
-        const category = (r?.c?.[catIdx]?.v || 'Other').toString();
-        const stockRaw = r?.c?.[stockIdx]?.v;
-        const stock = (stockRaw ?? '').toString().trim();
-        (categoryMap[category] ||= []).push({ product: product.toString(), stock });
+            // Refill date & reset toggles
+            (function setToday(){ const t=new Date(); if ('valueAsDate' in dateInput) dateInput.valueAsDate=t; if(!dateInput.value){const y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0'); dateInput.value=`${y}-${m}-${d}`;} })();
+  
+            for (let i = 0; i < 5; i++) {
+              const modeEl = document.getElementById(`mode${i}`);
+              if (modeEl) {
+                modeEl.checked = false;
+                modeEl.setAttribute('aria-pressed','false');
+                updateStockPreview(i);
+              }
+            }
+            for (let i = 0; i < 5; i++) updateStockPreview(i);
+  
+            toggleSubmitEnabled();
+          }else{
+            showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
+            submitBtn.disabled = false;
+          }
+        }catch(err){
+          console.error(err);
+          showMsg(formMsg, 'Network error or timeout. Please check your connection and try again.', 'error');
+          submitBtn.disabled = false;
+        }finally{
+          clearTimeout(t);
+        }
       });
   
-      const categories = Object.keys(categoryMap).sort((a,b)=>a.localeCompare(b));
-      for (const k of categories) categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
-  
-      const optionsHTML = categories.map(cat => `
-        <optgroup label="${cat.replaceAll('"','&quot;')}">
-          ${categoryMap[cat].map(({ product, stock }) => {
-            const safe = product.replaceAll('"','&quot;');
-            const stockText = (stock ?? '').toString().trim() || 'n/a';
-            return `<option value="${safe}" data-stock="${stockText}">${safe}</option>`;
-          }).join('')}
-        </optgroup>
-      `).join('');
-  
-      if (!optionsHTML.trim()) throw new Error('No products found in sheet (product column empty?).');
-  
-      // Render rows
-      productFields.innerHTML = '';
-      for (let i = 0; i < 5; i++) {
-        productFields.appendChild(makeProductBlock(i, optionsHTML));
-      }
-  
-      productFields.setAttribute('aria-busy', 'false');
-      initChoicesForSelects();
-      addVisibilityLogic();
-  
-      for (let i = 0; i < 5; i++) updateStockPreview(i);
-      toggleSubmitEnabled();
-  
-    } catch (err) {
-      console.error('Failed to load product list:', err);
-      showMsg(formMsg, (err && err.message)
-        ? `Failed to load product list: ${err.message}`
-        : 'Failed to load product list. Please try again later.', 'error');
-    } finally {
-      productFields.setAttribute('aria-busy', 'false');
-      const loading = document.getElementById('loadingMsg');
-      if (loading) loading.remove();
-    }
-  };
-
-
-
-    // Show selected product's stock
-    const updateStockInfo = (index) => {
-      const sel = document.getElementById(`product${index}`);
-      const info = document.getElementById(`stockInfo${index}`);
-      if (!sel || !info) return;
-      const opt = sel.selectedOptions?.[0];
-      const stock = opt?.dataset?.stock;
-      info.innerHTML = sel.value ? `Current stock: <b>${stock ?? 'n/a'}</b>` : '';
-    };
-
-    // Live "after add/remove" preview (defaults to remove)
-    const updateStockPreview = (index) => {
-      const sel = document.getElementById(`product${index}`);
-      const qtyVal = document.getElementById(`quantity${index}`)?.value || '0';
-      const qty = parseInt(qtyVal, 10) || 0;
-
-      const info = document.getElementById(`stockInfo${index}`);
-      if (!sel || !info) return;
-
-      const opt = sel.selectedOptions?.[0];
-      const stockStr = opt?.dataset?.stock ?? 'n/a';
-      const stock = parseInt(stockStr, 10);
-
-      const modeEl = document.getElementById(`mode${index}`);
-      const mode = (modeEl && modeEl.checked) ? 'add' : 'remove';
-
-      if (!sel.value) { info.innerHTML = ''; return; }
-      if (Number.isNaN(stock)) { info.innerHTML = `Current stock: <b>${stockStr}</b>`; return; }
-
-      if (qty > 0) {
-        const after = mode === 'add' ? stock + qty : stock - qty;
-        info.innerHTML = `Current stock: <b>${stock}</b> • After ${mode}: <b>${Math.max(after, 0)}</b>`;
-      } else {
-        info.innerHTML = `Current stock: <b>${stock}</b>`;
-      }
-    };
-
-    // Submit
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      showMsg(formMsg, '', '');
-      submitBtn.disabled = true;
-
-      const data = new FormData(form);
-      const payload = {
-        technician: data.get('technician')?.trim(),
-        date: data.get('date'),
-        products: []
-      };
-      for (let i = 0; i < 5; i++){
-        const product = data.get(`product${i}`);
-        const quantity = data.get(`quantity${i}`);
-        if (product && quantity && Number(quantity)>0){
-          const mode = document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove';
-          payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode });
-        }
-      }
-
-      if (!payload.products.length){
-        showMsg(formMsg, 'Please select at least one product with a quantity of 1 or more.', 'warn');
-        submitBtn.disabled = false;
-        return;
-      }
-
-      // Prevent over-removal per item
-      const errors = [];
-      for (let i = 0; i < 5; i++) {
-        const sel = document.getElementById(`product${i}`);
-        const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
-        if (!sel || !sel.value || !qty) continue;
-        const opt = sel.selectedOptions?.[0];
-        const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
-        const add = document.getElementById(`mode${i}`)?.checked;
-        if (!add && !Number.isNaN(stock) && qty > stock) {
-          errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
-        }
-      }
-      if (errors.length) {
-        showMsg(formMsg, errors.join(' '), 'warn');
-        submitBtn.disabled = false;
-        return;
-      }
-
-      const controller = new AbortController();
-      const t = setTimeout(()=>controller.abort(), 15000);
-      try{
-        const res = await fetch(webhookURL, {
-          method:'POST',
-          body: JSON.stringify(payload),
-          headers:{ 'Content-Type':'application/json' },
-          signal: controller.signal
-        });
-        clearTimeout(t);
-
-        if (res.ok){
-          showMsg(formMsg, 'Form submitted successfully!', 'ok');
-          form.reset();
-
-          // Soft reset UI
-          for (let i=0; i<5; i++){
-            const sel = document.getElementById(`product${i}`);
-            const qty = document.getElementById(`quantity${i}`);
-            if (sel){
-              sel.value = '';
-              sel.dispatchEvent(new Event('change',{bubbles:true}));
-            }
-            if (qty){ qty.value=''; }
-            const block = productFields.children[i];
-            block.style.display = i===0 ? 'block' : 'none';
-          }
-          limitMessage.style.display='none';
-
-          // Refill date & reset toggles
-          (function setToday(){ const t=new Date(); if ('valueAsDate' in dateInput) dateInput.valueAsDate=t; if(!dateInput.value){const y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0'); dateInput.value=`${y}-${m}-${d}`;} })();
-
-          for (let i = 0; i < 5; i++) {
-            const modeEl = document.getElementById(`mode${i}`);
-            if (modeEl) {
-              modeEl.checked = false;
-              modeEl.setAttribute('aria-pressed','false');
-              updateStockPreview(i);
-            }
-          }
-          for (let i = 0; i < 5; i++) updateStockPreview(i);
-
-          toggleSubmitEnabled();
-        }else{
-          showMsg(formMsg, 'Something went wrong while submitting. Please try again.', 'error');
-          submitBtn.disabled = false;
-        }
-      }catch(err){
-        console.error(err);
-        showMsg(formMsg, 'Network error or timeout. Please check your connection and try again.', 'error');
-        submitBtn.disabled = false;
-      }finally{
-        clearTimeout(t);
-      }
+      loadProducts();
     });
-
-    loadProducts();
-  });
   </script>
 </body>
 </html>
