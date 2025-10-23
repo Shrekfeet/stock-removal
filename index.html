@@ -256,7 +256,7 @@
   </div>
 
   <script>
-  (function(){
+  window.addEventListener('DOMContentLoaded', function(){
     const sheetID   = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
     const webhookURL= 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
     const maxItems  = 5;
@@ -361,26 +361,36 @@
       return wrap;
     };
 
-    // Init Choices + wire change -> enable check
+    // Init Choices + wire change -> enable check (resilient)
     const initChoicesForSelects = () => {
-      $$('select').forEach(sel=>{
-        if (sel.dataset.choicesInit) return;
-        new Choices(sel, {
-          searchEnabled:true,
-          itemSelectText:'',
-          shouldSort:false,
-          placeholderValue:'-- Select a product --',
-          searchPlaceholderValue:'Search for a product...',
-          allowHTML:false
+      const tryInit = () => {
+        if (!window.Choices) {
+          // Retry shortly in case the CDN was a touch slow
+          return setTimeout(tryInit, 150);
+        }
+        document.querySelectorAll('select').forEach(sel => {
+          if (sel.dataset.choicesInit) return;
+          new Choices(sel, {
+            searchEnabled: true,
+            itemSelectText: '',
+            shouldSort: false,
+            placeholderValue: '-- Select a product --',
+            searchPlaceholderValue: 'Search for a product...',
+            allowHTML: false
+          });
+          sel.dataset.choicesInit = '1';
+    
+          // Keep FormData happy & re-check submit state
+          sel.addEventListener('change', () => {
+            sel.setAttribute('value', sel.value || '');
+            toggleSubmitEnabled();
+            updateStockPreview(Number(sel.id.replace('product','')));
+          });
         });
-        sel.dataset.choicesInit = '1';
-        sel.addEventListener('change', ()=>{
-          sel.setAttribute('value', sel.value || '');
-          toggleSubmitEnabled();        // <- make submit re-check on selection
-          updateStockPreview(Number(sel.id.replace('product',''))); // refresh preview if already typed qty
-        });
-      });
+      };
+      tryInit();
     };
+
 
     // Enable Submit when name+date present and at least one product+qty>0
     const toggleSubmitEnabled = () => {
