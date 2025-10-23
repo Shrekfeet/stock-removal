@@ -260,6 +260,8 @@
     const sheetID   = '1Mbtodjvs9m1QgzQPX18j8FnmlAzfKxxbGx8O6XUkySI';
     const webhookURL= 'https://hook.eu2.make.com/txaiit01opb9nhhre5ly9sju2a885ra4';
     const maxItems  = 5;
+    // <<< SET THIS to the tab name that holds the products >>>
+    const SHEET_TAB_NAME = 'Sheet1';  // <-- change 'Products' to your actual tab name
 
     const $ = (sel,root=document)=>root.querySelector(sel);
     const $$= (sel,root=document)=>Array.from(root.querySelectorAll(sel));
@@ -434,128 +436,120 @@
 
     // Completely updated loader (safe, resilient, and sorted)
     const loadProducts = async () => {
-      // --- Helpers kept local so this is truly drop-in ---
-      const fetchTextWithRetry = async (url, { timeoutMs = 12000, retries = 2 } = {}) => {
-        const attempt = async (n) => {
-          const controller = new AbortController();
-          const t = setTimeout(() => controller.abort(), timeoutMs);
-          try {
-            const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
-            clearTimeout(t);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return await res.text();
-          } catch (e) {
-            clearTimeout(t);
-            if (n < retries) {
-              await new Promise(r => setTimeout(r, 500 * (n + 1))); // simple backoff
-              return attempt(n + 1);
-            }
-            throw e;
+    // local helpers
+    const fetchTextWithRetry = async (url, { timeoutMs = 12000, retries = 2 } = {}) => {
+      const attempt = async (n) => {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+          clearTimeout(t);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.text();
+        } catch (e) {
+          clearTimeout(t);
+          if (n < retries) {
+            await new Promise(r => setTimeout(r, 600 * (n + 1)));
+            return attempt(n + 1);
           }
-        };
-        return attempt(0);
+          throw e;
+        }
       };
-    
-      const parseGViz = (text) => {
-        const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
-        if (!m) throw new Error('Unexpected response (no GViz payload) — check sheet sharing or tab (gid).');
-        return JSON.parse(m[1]);
-      };
-    
-      // If your products are NOT on the first tab, add &gid=YOUR_GID below.
-      const base = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-      const url  = `${base}&rand=${Date.now()}`; // cache-buster to avoid stale/cached responses
-    
-      try {
-        const text = await fetchTextWithRetry(url, { timeoutMs: 12000, retries: 2 });
-        const json = parseGViz(text);
-        const table = json?.table;
-        if (!table || !Array.isArray(table.rows)) throw new Error('No rows found in GViz table.');
-    
-        const { cols, rows } = table;
-    
-        // --- Detect column indexes robustly ---
-        // Product
-        let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product') || (c?.label || '').toLowerCase().includes('item'));
-        if (prodIdx === -1) {
-          // Fallback: column with most non-empty cells
-          const counts = cols.map((_, i) => rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0));
-          prodIdx = counts.indexOf(Math.max(...counts));
-        }
-    
-        // Category (defaults to column C / index 2 if not labeled)
-        let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
-        if (catIdx === -1) catIdx = 2;
-    
-        // Stock (try common names; default D / index 3)
-        const isStockLike = s => /(stock|qty|quantity|on\s*hand|available)/i.test(s);
-        let stockIdx = cols.findIndex(c => isStockLike(c?.label || ''));
-        if (stockIdx === -1) stockIdx = 3;
-    
-        // --- Build category -> [{product, stock}] ---
-        const categoryMap = {};
-        rows.forEach(r => {
-          const product = r?.c?.[prodIdx]?.v;
-          if (!product) return;
-          const category = (r?.c?.[catIdx]?.v || 'Other').toString();
-          const stockRaw = r?.c?.[stockIdx]?.v;
-          const stock = (stockRaw ?? '').toString().trim();
-    
-          (categoryMap[category] ||= []).push({ product: product.toString(), stock });
-        });
-    
-        // Sort categories and products for nicer UX
-        const categories = Object.keys(categoryMap).sort((a, b) => a.localeCompare(b));
-        for (const k of categories) {
-          categoryMap[k].sort((a, b) => a.product.localeCompare(b.product));
-        }
-    
-        // --- Build grouped <option>s (stock only in data attribute; label stays clean) ---
-        const optionsHTML = categories.map(cat => `
-          <optgroup label="${cat.replaceAll('"','&quot;')}">
-            ${categoryMap[cat].map(({ product, stock }) => {
-              const safe = product.replaceAll('"','&quot;');
-              const stockText = (stock ?? '').toString().trim() || 'n/a';
-              return `<option value="${safe}" data-stock="${stockText}">${safe}</option>`;
-            }).join('')}
-          </optgroup>
-        `).join('');
-    
-        if (!optionsHTML.trim()) {
-          throw new Error('No products found in sheet (is the product column empty?).');
-        }
-    
-        // --- Render five product rows ---
-        productFields.innerHTML = '';
-        for (let i = 0; i < 5; i++) {
-          productFields.appendChild(makeProductBlock(i, optionsHTML));
-        }
-    
-        // Init UI behaviors
-        productFields.setAttribute('aria-busy', 'false');
-        initChoicesForSelects();
-        addVisibilityLogic();
-    
-        // Prime previews & button state
-        for (let i = 0; i < 5; i++) updateStockPreview(i);
-        toggleSubmitEnabled();
-    
-      } catch (err) {
-        console.error('Failed to load product list:', err);
-        showMsg(
-          formMsg,
-          (err && err.message)
-            ? `Failed to load product list: ${err.message}`
-            : 'Failed to load product list. Please try again later.',
-          'error'
-        );
-      } finally {
-        // Always clear loading indicator even on error
-        productFields.setAttribute('aria-busy', 'false');
-        const loading = document.getElementById('loadingMsg');
-        if (loading) loading.remove();
-      }
+      return attempt(0);
     };
+  
+    const parseGViz = (text) => {
+      const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);/);
+      if (!m) throw new Error('Unexpected response (no GViz payload) — check sharing or tab name.');
+      return JSON.parse(m[1]);
+    };
+  
+    // Build a URL that targets the specific tab by NAME, with a cache-buster
+    const base = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+    const withSheet = `${base}&sheet=${encodeURIComponent(SHEET_TAB_NAME)}&rand=${Date.now()}`;
+    const fallback = `${base}&rand=${Date.now()}`; // fallback to first tab if named tab fails
+  
+    try {
+      // Try the named tab first
+      let text, json;
+      try {
+        text = await fetchTextWithRetry(withSheet, { timeoutMs: 12000, retries: 2 });
+        json = parseGViz(text);
+      } catch (e1) {
+        console.warn('Named tab fetch failed, trying first tab as fallback:', e1?.message);
+        text = await fetchTextWithRetry(fallback, { timeoutMs: 12000, retries: 1 });
+        json = parseGViz(text);
+      }
+  
+      const table = json?.table;
+      if (!table || !Array.isArray(table.rows)) throw new Error('No rows found in GViz table.');
+  
+      const { cols, rows } = table;
+  
+      // Detect columns (Product / Category / Stock)
+      let prodIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('product') || (c?.label || '').toLowerCase().includes('item'));
+      if (prodIdx === -1) {
+        const counts = cols.map((_, i) => rows.reduce((acc, r) => acc + (r?.c?.[i]?.v ? 1 : 0), 0));
+        prodIdx = counts.indexOf(Math.max(...counts));
+      }
+      let catIdx = cols.findIndex(c => (c?.label || '').toLowerCase().includes('category'));
+      if (catIdx === -1) catIdx = 2;
+  
+      const isStockLike = s => /(stock|qty|quantity|on\s*hand|available)/i.test(s);
+      let stockIdx = cols.findIndex(c => isStockLike(c?.label || ''));
+      if (stockIdx === -1) stockIdx = 3;
+  
+      // Build category -> [{product, stock}]
+      const categoryMap = {};
+      rows.forEach(r => {
+        const product = r?.c?.[prodIdx]?.v;
+        if (!product) return;
+        const category = (r?.c?.[catIdx]?.v || 'Other').toString();
+        const stockRaw = r?.c?.[stockIdx]?.v;
+        const stock = (stockRaw ?? '').toString().trim();
+        (categoryMap[category] ||= []).push({ product: product.toString(), stock });
+      });
+  
+      const categories = Object.keys(categoryMap).sort((a,b)=>a.localeCompare(b));
+      for (const k of categories) categoryMap[k].sort((a,b)=>a.product.localeCompare(b.product));
+  
+      const optionsHTML = categories.map(cat => `
+        <optgroup label="${cat.replaceAll('"','&quot;')}">
+          ${categoryMap[cat].map(({ product, stock }) => {
+            const safe = product.replaceAll('"','&quot;');
+            const stockText = (stock ?? '').toString().trim() || 'n/a';
+            return `<option value="${safe}" data-stock="${stockText}">${safe}</option>`;
+          }).join('')}
+        </optgroup>
+      `).join('');
+  
+      if (!optionsHTML.trim()) throw new Error('No products found in sheet (product column empty?).');
+  
+      // Render rows
+      productFields.innerHTML = '';
+      for (let i = 0; i < 5; i++) {
+        productFields.appendChild(makeProductBlock(i, optionsHTML));
+      }
+  
+      productFields.setAttribute('aria-busy', 'false');
+      initChoicesForSelects();
+      addVisibilityLogic();
+  
+      for (let i = 0; i < 5; i++) updateStockPreview(i);
+      toggleSubmitEnabled();
+  
+    } catch (err) {
+      console.error('Failed to load product list:', err);
+      showMsg(formMsg, (err && err.message)
+        ? `Failed to load product list: ${err.message}`
+        : 'Failed to load product list. Please try again later.', 'error');
+    } finally {
+      productFields.setAttribute('aria-busy', 'false');
+      const loading = document.getElementById('loadingMsg');
+      if (loading) loading.remove();
+    }
+  };
+
 
 
     // Show selected product's stock
