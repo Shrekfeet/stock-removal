@@ -331,6 +331,29 @@
         return JSON.parse(m[1]);
       }
 
+      // ✅ Must be declared before any code references it (hoisted)
+      function toggleSubmitEnabled() {
+        const nameOk = document.getElementById('technician').value.trim().length > 0;
+        const dateOk = !!document.getElementById('date').value;
+      
+        let hasOneValid = false;
+        for (let i = 0; i < 5; i++) {
+          const prod = document.getElementById(`product${i}`);
+          const qty  = document.getElementById(`quantity${i}`);
+          // tri-state helper returns 'add' | 'remove' | 'unset'
+          const mode = (typeof getMode === 'function') ? getMode(i) : (
+            document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove'
+          );
+      
+          if (prod && qty && prod.value && Number(qty.value) > 0 && mode !== 'unset') {
+            hasOneValid = true;
+            break;
+          }
+        }
+      
+        document.getElementById('submitBtn').disabled = !(nameOk && dateOk && hasOneValid);
+      }
+
       // Wire inputs to show next block, previews, and enable checks
       const addVisibilityLogic = () => {
         for (let i=0; i<maxItems; i++){
@@ -368,6 +391,7 @@
         $('#technician').addEventListener('input', toggleSubmitEnabled);
         dateInput.addEventListener('change', toggleSubmitEnabled);
       };
+
   
       // ✅ Cross-browser: auto-fill today's date + fallback
       (function setToday(){
