@@ -332,22 +332,46 @@
       }
 
       // Put this ABOVE setToday() and any listeners that reference it
-      function toggleSubmitEnabled() {
-        const nameOk = document.getElementById('technician').value.trim().length > 0;
-        const dateOk = !!document.getElementById('date').value;
+      function addVisibilityLogic() {
+        const blocks = document.querySelectorAll('.product-block');
       
-        let hasOneValid = false;
-        for (let i = 0; i < 5; i++) {
-          const prod = document.getElementById(`product${i}`);
-          const qty  = document.getElementById(`quantity${i}`);
-          const mode = getMode(i);
-          if (prod && qty && prod.value && Number(qty.value) > 0 && mode !== 'unset') {
-            hasOneValid = true;
-            break;
+        blocks.forEach((block, index) => {
+          const qtyInput  = block.querySelector(`input[name="quantity${index}"]`);
+          const prodSelect = block.querySelector(`select[name="product${index}"]`);
+          const modeInput  = document.getElementById(`mode${index}`);
+      
+          // show/hide next row based on qty
+          if (qtyInput) {
+            qtyInput.addEventListener('input', () => {
+              const next = blocks[index + 1];
+              if (next) {
+                const showNext = qtyInput.value && parseInt(qtyInput.value) > 0;
+                next.style.display = showNext ? 'block' : 'none';
+              }
+              updateStockPreview(index);
+              toggleSubmitEnabled();
+            });
           }
-        }
-        submitBtn.disabled = !(nameOk && dateOk && hasOneValid);
+      
+          // update preview when product changes
+          if (prodSelect) {
+            prodSelect.addEventListener('change', () => {
+              updateStockPreview(index);
+              toggleSubmitEnabled();
+            });
+          }
+      
+          // update preview when mode changes (the Add/Remove tri-state)
+          if (modeInput) {
+            modeInput.addEventListener('change', () => {
+              updateStockPreview(index);
+              toggleSubmitEnabled();
+            });
+          }
+        });
       }
+
+
   
   
       // ✅ Cross-browser: auto-fill today's date + fallback
@@ -629,6 +653,20 @@
         productFields.setAttribute('aria-busy', 'false');
         initChoicesForSelects();
         addVisibilityLogic();
+
+        // ▼ Wire listeners so any change updates preview + submit state
+        for (let i = 0; i < 5; i++) {
+          const qty  = document.getElementById(`quantity${i}`);
+          const prod = document.getElementById(`product${i}`);
+          const mode = document.getElementById(`mode${i}`);
+        
+          const refresh = () => { updateStockPreview(i); toggleSubmitEnabled(); };
+        
+          if (qty)  { qty.addEventListener('input', refresh);  qty.addEventListener('change', refresh); }
+          if (prod) { prod.addEventListener('change', refresh); }  // Choices fires 'change' on the native select
+          if (mode) { mode.addEventListener('change', refresh); }  // tri-state helper should set input.value + dispatch change
+        }
+
     
         for (let i = 0; i < 5; i++) updateStockPreview(i);
         toggleSubmitEnabled();
