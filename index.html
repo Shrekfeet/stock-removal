@@ -331,48 +331,43 @@
         return JSON.parse(m[1]);
       }
 
-      // Put this ABOVE setToday() and any listeners that reference it
-      function addVisibilityLogic() {
-        const blocks = document.querySelectorAll('.product-block');
-      
-        blocks.forEach((block, index) => {
-          const qtyInput  = block.querySelector(`input[name="quantity${index}"]`);
-          const prodSelect = block.querySelector(`select[name="product${index}"]`);
-          const modeInput  = document.getElementById(`mode${index}`);
-      
-          // show/hide next row based on qty
-          if (qtyInput) {
-            qtyInput.addEventListener('input', () => {
-              const next = blocks[index + 1];
-              if (next) {
-                const showNext = qtyInput.value && parseInt(qtyInput.value) > 0;
-                next.style.display = showNext ? 'block' : 'none';
-              }
-              updateStockPreview(index);
-              toggleSubmitEnabled();
-            });
-          }
-      
-          // update preview when product changes
-          if (prodSelect) {
-            prodSelect.addEventListener('change', () => {
-              updateStockPreview(index);
-              toggleSubmitEnabled();
-            });
-          }
-      
-          // update preview when mode changes (the Add/Remove tri-state)
-          if (modeInput) {
-            modeInput.addEventListener('change', () => {
-              updateStockPreview(index);
-              toggleSubmitEnabled();
-            });
-          }
-        });
-      }
-
-
+      // Wire inputs to show next block, previews, and enable checks
+      const addVisibilityLogic = () => {
+        for (let i=0; i<maxItems; i++){
+          const qty  = document.getElementById(`quantity${i}`);
+          const prod = document.getElementById(`product${i}`);
+          const modeEl = document.getElementById(`mode${i}`);
   
+          if (qty){
+            qty.addEventListener('input', ()=>{
+              const val = parseInt(qty.value,10);
+              const next = productFields.children[i+1];
+              if (next) next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+              if (i === maxItems-1) limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
+              updateStockPreview(i);
+              toggleSubmitEnabled();
+            });
+          }
+  
+          if (prod){
+            prod.addEventListener('change', ()=>{
+              updateStockInfo(i);
+              updateStockPreview(i);
+              toggleSubmitEnabled();
+            });
+          }
+  
+          if (modeEl){
+            modeEl.addEventListener('change', ()=>{
+              modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
+              updateStockPreview(i);
+            });
+          }
+        }
+  
+        $('#technician').addEventListener('input', toggleSubmitEnabled);
+        dateInput.addEventListener('change', toggleSubmitEnabled);
+      };
   
       // ✅ Cross-browser: auto-fill today's date + fallback
       (function setToday(){
@@ -459,44 +454,6 @@
           });
         };
         tryInit();
-      };
-  
-      // Wire inputs to show next block, previews, and enable checks
-      const addVisibilityLogic = () => {
-        for (let i=0; i<maxItems; i++){
-          const qty  = document.getElementById(`quantity${i}`);
-          const prod = document.getElementById(`product${i}`);
-          const modeEl = document.getElementById(`mode${i}`);
-  
-          if (qty){
-            qty.addEventListener('input', ()=>{
-              const val = parseInt(qty.value,10);
-              const next = productFields.children[i+1];
-              if (next) next.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-              if (i === maxItems-1) limitMessage.style.display = (Number.isInteger(val) && val>0) ? 'block' : 'none';
-              updateStockPreview(i);
-              toggleSubmitEnabled();
-            });
-          }
-  
-          if (prod){
-            prod.addEventListener('change', ()=>{
-              updateStockInfo(i);
-              updateStockPreview(i);
-              toggleSubmitEnabled();
-            });
-          }
-  
-          if (modeEl){
-            modeEl.addEventListener('change', ()=>{
-              modeEl.setAttribute('aria-pressed', modeEl.checked ? 'true' : 'false');
-              updateStockPreview(i);
-            });
-          }
-        }
-  
-        $('#technician').addEventListener('input', toggleSubmitEnabled);
-        dateInput.addEventListener('change', toggleSubmitEnabled);
       };
 
       // Tri-state mode helpers
@@ -738,7 +695,12 @@
           const product = data.get(`product${i}`);
           const quantity = data.get(`quantity${i}`);
           if (product && quantity && Number(quantity)>0){
-            const mode = document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove';
+            const mode = getMode(i); // 'add' | 'remove' | 'unset'
+            if (mode === 'unset') {
+              showMsg(formMsg, `Please choose Add or Remove for Item ${i+1}.`, 'warn');
+              submitBtn.disabled = false;
+              return;
+            }
             payload.products.push({ product, quantity: String(parseInt(quantity,10)), mode });
           }
         }
@@ -812,12 +774,8 @@
             (function setToday(){ const t=new Date(); if ('valueAsDate' in dateInput) dateInput.valueAsDate=t; if(!dateInput.value){const y=t.getFullYear(),m=String(t.getMonth()+1).padStart(2,'0'),d=String(t.getDate()).padStart(2,'0'); dateInput.value=`${y}-${m}-${d}`;} })();
   
             for (let i = 0; i < 5; i++) {
-              const modeEl = document.getElementById(`mode${i}`);
-              if (modeEl) {
-                modeEl.checked = false;
-                modeEl.setAttribute('aria-pressed','false');
-                updateStockPreview(i);
-              }
+              setModeState(i, 'unset');   // center + grey
+              updateStockPreview(i);
             }
             for (let i = 0; i < 5; i++) updateStockPreview(i);
   
