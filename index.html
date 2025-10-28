@@ -711,24 +711,35 @@
           return;
         }
   
-        // Prevent over-removal per item
+        // --- PREVENT OVER-REMOVAL ONLY (adds are always allowed) ---
         const errors = [];
         for (let i = 0; i < 5; i++) {
           const sel = document.getElementById(`product${i}`);
           const qty = parseInt((data.get(`quantity${i}`) || '0'), 10);
           if (!sel || !sel.value || !qty) continue;
-          const opt = sel.selectedOptions?.[0];
-          const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
-          const add = document.getElementById(`mode${i}`)?.checked;
-          if (!add && !Number.isNaN(stock) && qty > stock) {
-            errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
+        
+          // Read mode (tri-state): 'add' | 'remove' | 'unset'
+          const mode = typeof getMode === 'function'
+            ? getMode(i)
+            : (document.getElementById(`mode${i}`)?.checked ? 'add' : 'remove');
+        
+          // Only enforce stock ceiling on REMOVALS
+          if (mode === 'remove') {
+            const opt   = sel.selectedOptions?.[0];
+            const stock = parseInt(opt?.dataset?.stock || 'NaN', 10);
+            if (!Number.isNaN(stock) && qty > stock) {
+              errors.push(`Item ${i+1}: quantity (${qty}) exceeds current stock (${stock}).`);
+            }
           }
         }
+        
         if (errors.length) {
           showMsg(formMsg, errors.join(' '), 'warn');
           submitBtn.disabled = false;
           return;
         }
+        // ------------------------------------------------------------
+
   
         const controller = new AbortController();
         const t = setTimeout(()=>controller.abort(), 15000);
